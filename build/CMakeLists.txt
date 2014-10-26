@@ -15,6 +15,7 @@ set(lib_sources
   ${sd}/KankerApp.cpp
   ${sd}/KankerFont.cpp
   ${sd}/KankerGlyph.cpp
+  ${sd}/KankerDrawer.cpp
 )
 
 if (APPLE) 

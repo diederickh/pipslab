@@ -8,6 +8,7 @@
 #include <FreetypeFont.h>
 #include <KankerFont.h>
 #include <KankerGlyph.h>
+#include <KankerDrawer.h>
 
 #define REMOXLY_USE_OPENGL
 #include <gui/Remoxly.h>
@@ -62,6 +63,7 @@ class KankerApp {
   Painter painter;              /* Used when drawing the captured input. */
   KankerFont kanker_font;
   KankerGlyph* kanker_glyph;
+  KankerDrawer kanker_drawer;   /* Used to draw the glyphs in a more interesting way. */
   bool is_mouse_pressed;        /* Is set to true when the user pressed the mouse */
   Container* gui_home;
   int gui_width;

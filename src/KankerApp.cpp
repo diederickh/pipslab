@@ -61,6 +61,20 @@ int KankerApp::init() {
     gui_home->add(sel).setPosition(painter.width() - 228, painter.height() - 200).setWidth(200);
     gui_home->add(new Button("Load",  0, GUI_ICON_FOLDER_OPEN, on_load_clicked, this,  GUI_CORNER_ALL | GUI_OUTLINE)).setPosition(painter.width() - 228, painter.height() - 175).setWidth(200);
   }
+
+  /* init the drawer. */
+  if (0 != kanker_drawer.init()) {
+    printf("error: failed to initialize the drawer.\n");
+    return -1;
+  }
+
+  /* TESTING */
+
+  if (0 == kanker_font.load(rx_to_data_path("fonts/diederick.xml"))) {
+    printf("Testing with the font drawer.\n");
+    kanker_drawer.updateVertices(kanker_font.getGlyph('a'));
+  }
+
   
   return 0;
 }
@@ -85,6 +99,8 @@ void KankerApp::update() {
 }
 
 void KankerApp::draw() {
+
+  kanker_drawer.draw();
 
   switch (state) {
     case KSTATE_HOME:               { drawStateHome();             break;    }

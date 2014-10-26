@@ -139,6 +139,7 @@ int KankerFont::load(std::string filepath) {
 
   std::ifstream ifs(filepath.c_str(),  std::ios::in);
   if(!ifs.is_open()) {
+    printf("error: failed to load file: %s, wrong path?\n", filepath.c_str());
     return false;
   }
  
