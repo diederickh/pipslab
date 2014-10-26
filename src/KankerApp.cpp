@@ -84,6 +84,7 @@ int KankerApp::getFontFiles(std::vector<std::string>& files) {
 
   std::vector<std::string> full_paths;
   full_paths = rx_get_files(rx_to_data_path("fonts"), "xml");
+  //  full_paths = rx_get_files("C:\\", "xml");
   if (0 == full_paths.size()) {
     return -1;
   }

@@ -27,6 +27,9 @@
 #include <FreetypeFont.h>
 KankerApp* app_ptr = NULL;
 
+// font win dir list
+#include <tchar.h>
+#include <strsafe.h>
 /* ------------------------------------------------------------------------------------ */
 
 void button_callback(GLFWwindow* win, int bt, int action, int mods);
@@ -74,6 +77,29 @@ int main() {
   if (!gladLoadGL()) {
     printf("Cannot load GL.\n");
     exit(1);
+  }
+
+  /* ------------------------------- */
+  WIN32_FIND_DATA ffd;
+  TCHAR dir[MAX_PATH];
+  DWORD err;
+  HANDLE handle;
+  std::string ext = "sys";
+  StringCchCopy(dir, MAX_PATH, TEXT(".\\"));
+  StringCchCopy(dir, MAX_PATH, TEXT("\\*.sys"));
+  //  StringCchCopy(dir, MAX_PATH, TEXT("*.sys"));
+  
+  handle = FindFirstFile(dir, &ffd);
+  if (INVALID_HANDLE_VALUE == handle) {
+    printf("error: cannot get directory listing.\n");
+  }
+  else {
+    do {
+      if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        continue;
+      }
+      printf("-- %s\n", ffd.cFileName);
+    } while (FindNextFile(handle, &ffd) != 0);
   }
 
   // ----------------------------------------------------------------

@@ -27,12 +27,14 @@ extern_path=${d}/../extern/${triplet}
 install_path=${d}/../install/${triplet}
 
 # Check if extern dir is created and if not, compile dependencies.
-if [  -d ${extern_path} ] ; then
+if [ -d ${extern_path} ] ; then
 
     if [ "${is_linux}" = "y" ] ; then
         ./dependencies/build_unix_dependencies.sh
     elif [ "${is_mac}" = "y" ] ; then
         ./dependencies/build_unix_dependencies.sh
+    elif [ "${is_win}" = "y" ] ; then
+        ./dependencies/build_win_dependencies.sh
     fi
 
 #    if [ ! -d ${d}/install ] ; then

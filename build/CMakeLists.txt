@@ -43,6 +43,23 @@ if (APPLE)
     -lz
     -lbz2
     )
+elseif(WIN32)
+  set(app_libs
+    ${EXTERN_LIB_DIR}/glfw3.lib
+    ${EXTERN_LIB_DIR}/remoxly.lib
+    ${EXTERN_LIB_DIR}/libpng16_static.lib
+    ${EXTERN_LIB_DIR}/zlibstatic.lib
+    ${EXTERN_LIB_DIR}/freetype.lib
+    Opengl32.lib                                   
+    ws2_32.lib                  # opengl / glfw
+    psapi.lib                   # opengl / glfw
+    iphlpapi.lib                # opengl / glfw
+    Mfplat.lib                  # video capture                
+    Mf.lib                      # video capture
+    Mfuuid.lib                  # video capture
+    Mfreadwrite.lib             # MFCreateSourceFreaderFromMediaSource
+    Shlwapi.lib                 # QISearch (Callback)
+    )
 endif()
 
 add_library(kanker ${lib_sources})
