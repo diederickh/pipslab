@@ -20,6 +20,8 @@ class KankerGlyph {
   void clear();                                       /* Removes all line segments / points .. */
   void onStartLine();                                 /* Must be called in input mode, when the user starts drawing a line. A glyph can contain multiple lines. */
   void onEndLine();                                   /* Must be called in input mode, when the user ends drawing a line. A glyph can contain multiple lines. */
+  void normalize();                                   /* Normalizes the points of all segments. */ 
+  vec4 getBoundingBox();                              /* Returns the bounding box of all points. */
 
  public:
   int charcode;
@@ -37,7 +39,7 @@ inline void KankerGlyph::addPoint(float x, float y, float z) {
     printf("error: cannot add point to glyph, because there is no segment. Did you call createLineSegment? \n");
     return;
   }
-
+  //printf("Adding: %f, %f\n", x, y);
   curr_segment->points.push_back(vec3(x,y,z));
 }
 

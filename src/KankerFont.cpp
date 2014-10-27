@@ -93,7 +93,7 @@ int KankerFont::save(std::string filepath) {
 
     KankerGlyph* glyph = it->second;
 
-    ss << "\t<glyph charcode=\"" << glyph->charcode << "\">\n";
+    ss << "\t<glyph charcode=\"" << glyph->charcode << "\" char=\"" <<(char)glyph->charcode << "\" >\n";
 
     for (size_t i = 0; i < glyph->segments.size(); ++i) {
       

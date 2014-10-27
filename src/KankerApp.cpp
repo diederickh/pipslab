@@ -74,7 +74,6 @@ int KankerApp::init() {
     printf("Testing with the font drawer.\n");
     kanker_drawer.updateVertices(kanker_font.getGlyph('a'));
   }
-
   
   return 0;
 }
@@ -256,7 +255,9 @@ void KankerApp::onMouseMove(double x, double y) {
   switch (state) {
     case KSTATE_CHAR_INPUT_DRAWING: {
       if (is_mouse_pressed) {
-        kanker_glyph->addPoint(x, y, 0.0f);
+        if (x < (painter.width() - gui_width)) {
+          kanker_glyph->addPoint(x, y, 0.0f);
+        }
       }
     }
     default: { 
@@ -274,8 +275,10 @@ void KankerApp::onMousePress(double x, double y, int bt, int mods) {
 
   switch (state) {
     case KSTATE_CHAR_INPUT_DRAWING: {
-      kanker_glyph->onStartLine();
-      kanker_glyph->addPoint(x, y, 0.0f);
+      if (x < (painter.width() - gui_width)) {
+        kanker_glyph->onStartLine();
+        kanker_glyph->addPoint(x, y, 0.0f);
+      }
       break;
     }
     default: { 

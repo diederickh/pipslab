@@ -12,6 +12,9 @@ include_directories(
 
 set(lib_sources
   ${sd}/FreetypeFont.cpp
+  ${sd}/Blur.cpp
+  ${sd}/BlurFBO.cpp
+  ${sd}/FBO.cpp
   ${sd}/KankerApp.cpp
   ${sd}/KankerFont.cpp
   ${sd}/KankerGlyph.cpp
