@@ -21,11 +21,13 @@
 #define ROXLU_USE_MATH
 #define ROXLU_USE_OPENGL
 #define ROXLU_USE_PNG
+#define ROXLU_USE_LOG
 #define ROXLU_IMPLEMENTATION
 #include <tinylib.h>
 
 #include <FreetypeFont.h>
 KankerApp* app_ptr = NULL;
+
 
 /* ------------------------------------------------------------------------------------ */
 
@@ -79,6 +81,8 @@ int main() {
   // ----------------------------------------------------------------
   // THIS IS WHERE YOU START CALLING OPENGL FUNCTIONS, NOT EARLIER!!
   // ----------------------------------------------------------------
+  rx_log_init();
+
   KankerApp app;
   if (0 != app.init()) {
     printf("error: cannot init the app.\n");
@@ -87,13 +91,14 @@ int main() {
   app_ptr = &app;
 
   while(!glfwWindowShouldClose(win)) {
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+      
     app.update();
     app.draw();
-
     glfwSwapBuffers(win);
+     
     glfwPollEvents();
   }
  
@@ -123,6 +128,9 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
   }
  
   switch(key) {
+    case GLFW_KEY_SPACE: {
+      break;
+    }
     case GLFW_KEY_ESCAPE: {
       glfwSetWindowShouldClose(win, GL_TRUE);
       break;

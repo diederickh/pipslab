@@ -14,8 +14,13 @@ KankerApp::KankerApp()
   :state(KSTATE_NONE)
   ,kanker_glyph(NULL)
   ,is_mouse_pressed(false)
+  ,is_mouse_inside_char(false)
   ,gui_width(256)
   ,selected_font_dx(0)
+  ,mouse_down_x(0)
+  ,mouse_down_y(0)
+  ,char_offset_x(0)
+  ,char_offset_y(0)
 {
 }
 
@@ -63,7 +68,7 @@ int KankerApp::init() {
   }
 
   /* init the drawer. */
-  if (0 != kanker_drawer.init()) {
+  if (0 != kanker_drawer.init(128, 96, painter.width(), painter.height())) {
     printf("error: failed to initialize the drawer.\n");
     return -1;
   }
@@ -99,13 +104,12 @@ void KankerApp::update() {
 }
 
 void KankerApp::draw() {
-
-  kanker_drawer.draw();
-
+  
   switch (state) {
     case KSTATE_HOME:               { drawStateHome();             break;    }
     case KSTATE_CHAR_INPUT_TITLE:   { drawStateCharInputTitle();   break;    }
     case KSTATE_CHAR_INPUT_DRAWING: { drawStateCharInputDrawing(); break;    }
+    case KSTATE_CHAR_EDIT:          { drawStateCharEdit();         break;    }
     default: {
       printf("error: invalid state: %d\n", state);
       break;
@@ -133,16 +137,22 @@ void KankerApp::drawStateCharInputDrawing() {
   }
 
   /* Draw the baseline. */
-  painter.rgba(31, 138, 112);
-  painter.line(0.0, painter.height() - 250, painter.width(), painter.height() - 250);
+  drawHelperLines();
 
   /* Draw the input lines. */
-  painter.color(1.0, 1.0, 1.0, 1.0);
+  painter.hex("FFFFFF");
+  painter.hex("666666");
+  drawGlyphAsLine(kanker_glyph, 0, 0);
 
+  painter.draw();
+  drawGui();
+}
 
-  for (size_t i = 0; i < kanker_glyph->segments.size(); ++i) {
+void KankerApp::drawGlyphAsLine(KankerGlyph* glyph, float offsetX, float offsetY) {
 
-    LineSegment* seg = kanker_glyph->segments[i];
+  for (size_t i = 0; i < glyph->segments.size(); ++i) {
+
+    LineSegment* seg = glyph->segments[i];
     if (seg->points.size() < 2) {
       continue;
     }
@@ -150,12 +160,75 @@ void KankerApp::drawStateCharInputDrawing() {
     for (size_t j = 0; j < seg->points.size() - 1; ++j) {
       vec3& a = seg->points[j];
       vec3& b = seg->points[j + 1];
-      painter.line(a.x, a.y, b.x, b.y);
+      painter.line(a.x + offsetX, a.y + offsetY, b.x + offsetX, b.y + offsetY);
     }
   }
+}
+
+void KankerApp::drawHelperLines() {
+
+  painter.hex("9F39DB");
+  painter.line(0.0, painter.height() - gui_width, painter.width(), painter.height() - gui_width);
+
+  painter.hex("004358");
+  painter.line(gui_width, 0, gui_width, painter.height());
+
+  painter.hex("5D098F");
+  painter.fill();
+  painter.circle(gui_width, painter.height() - gui_width, 3);
+}
+
+void KankerApp::drawStateCharEdit() {
+  
+  drawHelperLines();
+
+  if (is_mouse_inside_char) {
+    painter.hex("FFFFFF");
+  }
+  else {
+    painter.hex("666666");
+  }
+
+  drawGlyphAsLine(kanker_glyph, char_offset_x, char_offset_y);
 
   painter.draw();
+  
   drawGui();
+}
+
+void KankerApp::drawStateGlyphSelection() {
+
+  kanker_drawer.update();
+
+  int w = 1024;
+  int h = painter.height();
+  int num = 5;
+  int cell_w = w / num;
+  int cell_h = h / num;
+  //char * letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  const char* letters = "abcdefghijklmnopqrstuvwxyz";
+  int len = strlen(letters) - 1;
+
+  for (int j = 0; j < num; ++j) {
+    for (int i = 0; i < num; ++i) {
+
+      int dx = j * num + i;
+      if (dx > len) {
+        break;
+      }
+
+      KankerGlyph* glyph = kanker_font.getGlyph(letters[dx]);
+      if (NULL == glyph) {
+        continue;
+      }
+      if (0 == glyph->segments.size()) {
+        continue;
+      }
+      
+      kanker_drawer.updateVertices(glyph);
+      kanker_drawer.renderAndDraw(i * cell_w, j * cell_h);      
+    }
+  }
 }
 
 void KankerApp::drawGui() {
@@ -200,7 +273,6 @@ void KankerApp::switchState(int newstate) {
 
 void KankerApp::onChar(unsigned int key) {
 
-
   gui_home->onCharPress(key);
 
   switch (state) {
@@ -231,8 +303,10 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
         }
       }
       else if (GLFW_KEY_SPACE == key) {
-        switchState(KSTATE_CHAR_INPUT_TITLE);
+        //switchState(KSTATE_CHAR_INPUT_TITLE);
+        switchState(KSTATE_CHAR_EDIT);
       }
+      break;
     }
     default: {
       break;
@@ -259,12 +333,30 @@ void KankerApp::onMouseMove(double x, double y) {
           kanker_glyph->addPoint(x, y, 0.0f);
         }
       }
+      break;
+    }
+    case KSTATE_CHAR_EDIT: {
+      if (kanker_glyph) {
+        if (is_mouse_inside_char && is_mouse_pressed) {
+          char_offset_x = x - mouse_down_x;
+          char_offset_y = y - mouse_down_y;
+          //          printf("DX: %f, DY: %f\n", dx, dy);
+          return;
+        }
+
+        if (IS_INSIDE(x, y, kanker_glyph->min_x, kanker_glyph->min_y, kanker_glyph->width, kanker_glyph->height)) {
+          is_mouse_inside_char = true;
+        }
+        else { 
+          is_mouse_inside_char = false;
+        }
+      }
+      break;
     }
     default: { 
       break;
     }
   }
-
 }
 
 void KankerApp::onMousePress(double x, double y, int bt, int mods) {
@@ -281,6 +373,18 @@ void KankerApp::onMousePress(double x, double y, int bt, int mods) {
       }
       break;
     }
+    case KSTATE_CHAR_EDIT: { 
+      if (IS_INSIDE(x, y, kanker_glyph->min_x, kanker_glyph->min_y, kanker_glyph->width, kanker_glyph->height)) {
+        is_mouse_inside_char = true;
+        mouse_down_x = x;
+        mouse_down_y = y;
+      } 
+      else {
+        is_mouse_inside_char = false;
+      }
+
+      break;
+    }
     default: { 
       break;
     }
@@ -290,12 +394,22 @@ void KankerApp::onMousePress(double x, double y, int bt, int mods) {
 void KankerApp::onMouseRelease(double x, double y, int bt, int mods) {
 
   is_mouse_pressed = false;
+  
 
   gui_home->onMouseRelease(x, y, bt, mods);
 
   switch (state) {
     case KSTATE_CHAR_INPUT_DRAWING: {
       kanker_glyph->onEndLine();
+      break;
+    }
+    case KSTATE_CHAR_EDIT: {
+      if (is_mouse_inside_char) {
+        is_mouse_inside_char = false;
+        kanker_glyph->translate(char_offset_x, char_offset_y);
+        char_offset_x = 0.0f;
+        char_offset_y = 0.0f;
+      }
       break;
     }
     default: { 

@@ -4,6 +4,13 @@
 KankerGlyph::KankerGlyph(int charcode) 
   :charcode(charcode)
   ,curr_segment(NULL)
+  ,is_normalized(false)
+  ,min_x(FLT_MAX)
+  ,min_y(FLT_MAX)
+  ,max_x(FLT_MIN)
+  ,max_y(FLT_MIN)
+  ,width(0)
+  ,height(0)
 {
 }
 
@@ -46,6 +53,10 @@ void KankerGlyph::clear() {
 
 void KankerGlyph::normalize() {
 
+  if (is_normalized) {
+    return;
+  }
+
   vec4 bbox = getBoundingBox();
   float width = bbox[2] - bbox[0];
   float height = bbox[3] - bbox[1];
@@ -74,6 +85,8 @@ void KankerGlyph::normalize() {
       seg->points[j].y *= -inv;        /* normalize */
     }
   }
+
+  is_normalized = true;
 }
 
 vec4 KankerGlyph::getBoundingBox() {
@@ -103,4 +116,21 @@ vec4 KankerGlyph::getBoundingBox() {
   }
 
   return bbox;
+}
+
+void KankerGlyph::translate(float x, float y) {
+
+  for (size_t i = 0; i < segments.size(); ++i) {
+    LineSegment* seg = segments[i];
+    for (size_t j = 0; j < seg->points.size(); ++j) {
+      vec3& point = seg->points[j];
+      point.x += x;
+      point.y += y;
+    }
+  }
+
+  min_x += x;
+  max_x += x;
+  min_y += y;
+  max_y += y;
 }

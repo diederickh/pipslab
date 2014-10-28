@@ -95,7 +95,6 @@ int FBO::isComplete() {
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   return 0;
-
 }
 
 void FBO::bind() {

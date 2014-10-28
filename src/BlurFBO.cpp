@@ -84,7 +84,6 @@ void BlurFBO::blur(GLuint tex) {
     blur_prog.blurY(width, height);
   }
 
-
   /* and reset the fbo and viewport*/
   fbo.unbind();
   glViewport(0, 0, win_width, win_height);

@@ -3,7 +3,7 @@
   KankerDrawer
   -----------
 
-  Draws glyphsx in a more interesint way.
+  Draws glyphs in a more interesting way.
 
  */
 #ifndef KANKER_DRAWER_H
@@ -84,9 +84,12 @@ class KankerDrawer {
  public:
   KankerDrawer();
   ~KankerDrawer();
-  int init();
+  int init(int rttWidth, int rttHeight, int winWidth, int winHeight);
   int updateVertices(KankerGlyph* glyph);
-  void draw();
+  void update();
+  void renderToTexture();                    /* renders the glyph to a texture, that is drawn in draw(). */
+  void draw(int x = 0, int y = 0);
+  void renderAndDraw(int x, int y);
 
  public:
   GLuint geom_vbo;
@@ -95,7 +98,7 @@ class KankerDrawer {
   GLuint geom_vert;
   GLuint geom_frag;
   GLuint geom_tex;
-  GLuint mix_vao;        /* mix, mixes blurred + front + ?? */
+  GLuint mix_vao;                            /* mix, mixes blurred + front + ?? */
   GLuint mix_vert;
   GLuint mix_frag;
   GLuint mix_prog;
@@ -103,10 +106,14 @@ class KankerDrawer {
   GLint u_pm;
   GLint u_mm;
   GLint u_vm;
-  size_t capacity;        /* number of bytes that can be stored in the VBO. */
-  mat4 mm;                /* model matrix */
-  mat4 pm;                /* projection matrix. */
-  mat4 vm;                /* view matrix. */
+  size_t capacity;                          /* number of bytes that can be stored in the VBO. */
+  mat4 mm;                                  /* model matrix */
+  mat4 pm;                                  /* projection matrix. */
+  mat4 vm;                                  /* view matrix. */
+  int rtt_width;
+  int rtt_height;
+  int win_width;
+  int win_height;
 
   std::vector<GLint> offsets;
   std::vector<GLsizei> counts;

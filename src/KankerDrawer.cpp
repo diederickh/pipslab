@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <KankerDrawer.h>
 
 #define DRAW_LINES 0
@@ -10,21 +11,37 @@ KankerDrawer::KankerDrawer()
   ,geom_prog(0)
   ,geom_frag(0)
   ,geom_tex(0)
+  ,mix_vao(0)
+  ,mix_vert(0)
+  ,mix_frag(0)
+  ,mix_prog(0)
+  ,bg_tex(0)
   ,u_pm(-1)
   ,u_mm(-1)
   ,u_vm(-1)
+  ,capacity(0)
+  ,rtt_width(-1)
+  ,rtt_height(-1)
+  ,win_width(-1)
+  ,win_height(-1)
 {
 }
 
 KankerDrawer::~KankerDrawer() {
 }
 
-int KankerDrawer::init() {
+int KankerDrawer::init(int rttWidth, int rttHeight, int winWidth, int winHeight) {
 
-  if (0 != geom_vao) {
-    printf("error: looks like we're already initialized in KankerDrawer.\n");
-    return -1;
-  }
+  if (0 != geom_vao) {  printf("error: looks like we're already initialized in KankerDrawer.\n");  return -1;  }
+  if (0 >= rttWidth) {  printf("error: invalid rtt width: %d\n", rttWidth);  return -2;   }
+  if (0 >= rttHeight) { printf("error: invalid rtt height: %d\n", rttHeight);  return -3;  }
+  if (0 >= winWidth) { printf("error: invalid win width.\n"); return -4; } 
+  if (0 >= winHeight) { printf("error: invalid win height.\n"); return -5; } 
+
+  rtt_width = rttWidth;
+  rtt_height = rttHeight;
+  win_width = winWidth;
+  win_height = winHeight;
 
   /* We start with a GEOM_VBO that can hold 1000 geom_vertices. */
   capacity = sizeof(KankerVertex) * 1000;
@@ -55,15 +72,10 @@ int KankerDrawer::init() {
     return -2;
   }
                                                 
-  pm.perspective(45.0f, 1280.0 / 768.0, 0.1f, 100.0f);
+  pm.perspective(45.0f, float(rtt_width) / rtt_height, 0.1f, 100.0f);
   mm.identity();
-#if DRAW_LINES
-  mm.scale(0.005f, 0.005, 0.005);
-  vm.translate(0.0f, 0.0f, -4.5f);
-#elif DRAW_STRIPS
   mm.translate(0.0, 0.0, 0.0);
   vm.translate(0.0f, 0.0f, -2.5f);
-#endif
 
   glUniformMatrix4fv(u_pm, 1, GL_FALSE, pm.ptr());
   glUniformMatrix4fv(u_mm, 1, GL_FALSE, mm.ptr());
@@ -89,12 +101,12 @@ int KankerDrawer::init() {
 
   glUniform1i(glGetUniformLocation(geom_prog, "u_tex"), 0);
 
-  if (0 != blur.init(1280, 768, 5.0f)) {
+  if (0 != blur.init(rtt_width, rtt_height, 5.0f)) {
     printf("error: failed to initialize the blurfbo.\n");
     exit(EXIT_FAILURE);
   }
 
-  fbo.init(1280, 768);
+  fbo.init(rtt_width, rtt_height);
   fbo.addTexture(GL_RGBA, fbo.width, fbo.height, GL_RGBA, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0);
 
   /* setup the mix pass. */
@@ -128,44 +140,56 @@ int KankerDrawer::init() {
   return 0;
 }
 
-void KankerDrawer::draw() {
+void KankerDrawer::update() {
+  mm.rotateY(0.03);
+}
+
+void KankerDrawer::renderAndDraw(int x, int y) {
+  renderToTexture();
+  draw(x, y);
+}
+
+void KankerDrawer::renderToTexture() {
+
+  glViewport(0, 0, rtt_width, rtt_height);
 
   glBindVertexArray(geom_vao);
   glUseProgram(geom_prog);
 
+  /* Draw textured version. */
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, geom_tex);
 
-  mm.rotateY(0.03);
+  
   glUniformMatrix4fv(u_mm, 1, GL_FALSE, mm.ptr());
   glUniform1f(glGetUniformLocation(geom_prog, "u_time"), rx_millis());
 
-#if DRAW_LINES
-  glMultiDrawArrays(GL_LINE_STRIP, &offsets[0], &counts[0], counts.size());
-#elif DRAW_STRIPS
-
-#if 0
-  glClear(GL_COLOR_BUFFER_BIT);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glMultiDrawArrays(GL_TRIANGLE_STRIP, &offsets[0], &counts[0], counts.size());
-#else
   fbo.bind();
   {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_BLEND);
-    //glBlendFunc(GL_ONE, GL_ONE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glMultiDrawArrays(GL_TRIANGLE_STRIP, &offsets[0], &counts[0], counts.size());
   }
   fbo.unbind();
 
+  /* Blur. */
   blur.blur(fbo.textures[0]);
-  /* @todo - create custom shader. */
-  //fbo.blit(GL_COLOR_ATTACHMENT0, 0, 0, fbo.width, fbo.height);
-  // blur.fbo.blit(GL_COLOR_ATTACHMENT0, 0, 0, fbo.width, fbo.height);
 
-  glDisable(GL_BLEND);
+  glViewport(0, 0, win_width, win_height);
+}
+
+void KankerDrawer::draw(int x, int y) {
+  assert(win_width > 0);
+  assert(win_height > 0);
+  assert(rtt_width > 0);
+  assert(rtt_height > 0);
+
+  glViewport(x, y, rtt_width, rtt_height);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  /* Draw the final version with blurred + textured layer. */
   glUseProgram(mix_prog);
 
   glActiveTexture(GL_TEXTURE0);
@@ -178,21 +202,8 @@ void KankerDrawer::draw() {
   glBindTexture(GL_TEXTURE_2D, bg_tex);
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  
-  //glClear(GL_COLOR_BUFFER_BIT);
-  //glEnable(GL_BLEND);
 
-#endif
-  /*
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  painter.clear();
-  painter.texture(blur.tex(), 0, 0, fbo.width, fbo.height);
-  painter.texture(fbo.textures[0], 0, 0, fbo.width, fbo.height);
-  painter.draw();
-  */
-#endif
-
+  glViewport(0, 0, win_width, win_height);
 }
 
 int KankerDrawer::updateVertices(KankerGlyph* glyph) {
@@ -211,12 +222,8 @@ int KankerDrawer::updateVertices(KankerGlyph* glyph) {
   offsets.clear();
   counts.clear();
 
-  float scale = 1.1f;
-
-#if DRAW_STRIPS
   glyph->normalize();
-#endif
- 
+
   for (size_t i = 0; i < glyph->segments.size(); ++i) {
 
     LineSegment* seg = glyph->segments[i];
@@ -225,16 +232,6 @@ int KankerDrawer::updateVertices(KankerGlyph* glyph) {
     }
 
     offsets.push_back(vertices.size());
-
-#if DRAW_LINES
-
-    for (size_t k = 0; k < seg->points.size(); ++k) {
-      KankerVertex v;
-      v.pos.set(seg->points[k].x,seg->points[k].y, seg->points[k].z);
-      vertices.push_back(v);
-    }
-
-#elif DRAW_STRIPS
 
     if (seg->points.size() < 2) {
       continue;
@@ -265,8 +262,6 @@ int KankerDrawer::updateVertices(KankerGlyph* glyph) {
       vertices.push_back(vert_b);
     }
 
-#endif
-
     counts.push_back(vertices.size() - offsets.back());
   }
 
@@ -275,7 +270,7 @@ int KankerDrawer::updateVertices(KankerGlyph* glyph) {
     return -3;
   }
 
-  printf("offsets: %lu, counts: %lu, vertices: %lu\n", offsets.size(), counts.size(), vertices.size());
+  //printf("offsets: %lu, counts: %lu, vertices: %lu\n", offsets.size(), counts.size(), vertices.size());
   
   glBindVertexArray(geom_vao);
   glBindBuffer(GL_ARRAY_BUFFER, geom_vbo);
