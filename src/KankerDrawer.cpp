@@ -15,7 +15,6 @@ KankerDrawer::KankerDrawer()
   ,mix_vert(0)
   ,mix_frag(0)
   ,mix_prog(0)
-  ,bg_tex(0)
   ,u_pm(-1)
   ,u_mm(-1)
   ,u_vm(-1)
@@ -117,26 +116,6 @@ int KankerDrawer::init(int rttWidth, int rttHeight, int winWidth, int winHeight)
   glUseProgram(mix_prog);
   glUniform1i(glGetUniformLocation(mix_prog, "u_blur_tex"), 0);
   glUniform1i(glGetUniformLocation(mix_prog, "u_scene_tex"), 1);
-  glUniform1i(glGetUniformLocation(mix_prog, "u_bg_tex"), 2);
-
-  /* background texture */
-  w = h = channels = 0;
-  rx_load_png(rx_to_data_path("bg.png"), &pixels, w, h, channels);
-  if (NULL == pixels) {
-    RX_ERROR("error: cannot load the pixels for the light streak.");
-    exit(EXIT_FAILURE);
-  }
-  
-  glGenTextures(1, &bg_tex);
-  glBindTexture(GL_TEXTURE_2D, bg_tex);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  delete[] pixels;
-  pixels = NULL;
-
   return 0;
 }
 
@@ -196,9 +175,6 @@ void KankerDrawer::draw(int x, int y) {
 
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, fbo.textures[0]);
-
-  glActiveTexture(GL_TEXTURE2);
-  glBindTexture(GL_TEXTURE_2D, bg_tex);
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 

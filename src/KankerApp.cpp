@@ -34,7 +34,8 @@ KankerApp::~KankerApp() {
 int KankerApp::init() {
   
   /* title font */
-  if (0 != title_font.open(rx_to_data_path("appfont.otf"), 60)) {
+  std::string font = "appfont.otf";
+  if (0 != title_font.open(rx_to_data_path(font), 60)) {
     RX_ERROR("error: cannot load the font.");
     exit(EXIT_FAILURE);
   }
@@ -43,14 +44,14 @@ int KankerApp::init() {
   title_font.alignCenter();
 
   /* info font */
-  if (0 != info_font.open(rx_to_data_path("appfont.otf"), 16)) {
+  if (0 != info_font.open(rx_to_data_path(font), 16)) {
     RX_ERROR("error: cannot load the font.");
     exit(EXIT_FAILURE);
   }
   info_font.color(1.0f, 1.0f, 1.0f, 1.0f);
 
   /* verbose font */
-  if (0 != verbose_font.open(rx_to_data_path("appfont.otf"), 16)) {
+  if (0 != verbose_font.open(rx_to_data_path(font), 16)) {
     RX_ERROR("error: cannot load the font.");
     exit(EXIT_FAILURE);
   }

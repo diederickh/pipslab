@@ -61,7 +61,6 @@ static const char* KANKER_FS = ""
 static const char* KANKER_MIX_FS = ""
   "#version 330\n"
   ""
-  "uniform sampler2D u_bg_tex;"
   "uniform sampler2D u_blur_tex;"
   "uniform sampler2D u_scene_tex;"
   ""
@@ -100,7 +99,6 @@ class KankerDrawer {
   GLuint mix_vert;
   GLuint mix_frag;
   GLuint mix_prog;
-  GLuint bg_tex;
   GLint u_pm;
   GLint u_mm;
   GLint u_vm;
