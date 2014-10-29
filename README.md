@@ -16,7 +16,7 @@ $ git clone git@github.com:roxlu/pipslab.git .
 
 ## Compiling and running
 
-The installation workt the same on Mac, Linux and Windows. On 
+The installation works the same on Mac, Linux and Windows. On 
 windows make sure you have GIT installed and that you used the 
 git bash windows. 
 
