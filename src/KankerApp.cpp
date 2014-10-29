@@ -15,13 +15,17 @@ KankerApp::KankerApp()
   ,kanker_glyph(NULL)
   ,is_mouse_pressed(false)
   ,is_mouse_inside_char(false)
+  ,is_mouse_inside_advance(false)
   ,gui_width(256)
   ,selected_font_dx(0)
+  ,glyph_dx(0)
   ,mouse_down_x(0)
   ,mouse_down_y(0)
   ,char_offset_x(0)
   ,char_offset_y(0)
+  ,advance_x(0)
 {
+  allowed_chars = "abcdefghijklmnopqrstuvwxyz";
 }
 
 KankerApp::~KankerApp() {
@@ -31,7 +35,7 @@ int KankerApp::init() {
   
   /* title font */
   if (0 != title_font.open(rx_to_data_path("appfont.otf"), 60)) {
-    printf("error: cannot load the font.\n");
+    RX_ERROR("error: cannot load the font.");
     exit(EXIT_FAILURE);
   }
 
@@ -40,14 +44,14 @@ int KankerApp::init() {
 
   /* info font */
   if (0 != info_font.open(rx_to_data_path("appfont.otf"), 16)) {
-    printf("error: cannot load the font.\n");
+    RX_ERROR("error: cannot load the font.");
     exit(EXIT_FAILURE);
   }
   info_font.color(1.0f, 1.0f, 1.0f, 1.0f);
 
   /* verbose font */
   if (0 != verbose_font.open(rx_to_data_path("appfont.otf"), 16)) {
-    printf("error: cannot load the font.\n");
+    RX_ERROR("error: cannot load the font.");
     exit(EXIT_FAILURE);
   }
   verbose_font.color(0.0f, 0.7f, 0.1f, 1.0f);
@@ -68,18 +72,18 @@ int KankerApp::init() {
   }
 
   /* init the drawer. */
-  if (0 != kanker_drawer.init(128, 96, painter.width(), painter.height())) {
-    printf("error: failed to initialize the drawer.\n");
+  if (0 != tiny_drawer.init(1024, 768, painter.width(), painter.height())) {
+    RX_ERROR("error: failed to initialize the drawer.");
+    return -1;
+  }
+  
+  int pw = 1024;
+  int ph = 768;
+  if (0 != preview_drawer.init(pw, ph, painter.width(), painter.height())) {
+    RX_ERROR("error: failed to initialize the preview drawer.");
     return -1;
   }
 
-  /* TESTING */
-
-  if (0 == kanker_font.load(rx_to_data_path("fonts/diederick.xml"))) {
-    printf("Testing with the font drawer.\n");
-    kanker_drawer.updateVertices(kanker_font.getGlyph('a'));
-  }
-  
   return 0;
 }
 
@@ -88,7 +92,6 @@ int KankerApp::getFontFiles(std::vector<std::string>& files) {
 
   std::vector<std::string> full_paths;
   full_paths = rx_get_files(rx_to_data_path("fonts"), "xml");
-  //  full_paths = rx_get_files("C:\\", "xml");
   if (0 == full_paths.size()) {
     return -1;
   }
@@ -100,18 +103,17 @@ int KankerApp::getFontFiles(std::vector<std::string>& files) {
   return 0;
 }
 
-void KankerApp::update() {
-}
-
 void KankerApp::draw() {
-  
+
   switch (state) {
     case KSTATE_HOME:               { drawStateHome();             break;    }
     case KSTATE_CHAR_INPUT_TITLE:   { drawStateCharInputTitle();   break;    }
     case KSTATE_CHAR_INPUT_DRAWING: { drawStateCharInputDrawing(); break;    }
     case KSTATE_CHAR_EDIT:          { drawStateCharEdit();         break;    }
+    case KSTATE_CHAR_PREVIEW:       { drawStateCharPreview();      break;    }
+    case KSTATE_CHAR_OVERVIEW:      { drawStateCharOverview();     break;    }
     default: {
-      printf("error: invalid state: %d\n", state);
+      RX_ERROR("error: invalid state: %d", state);
       break;
     }
   };
@@ -180,7 +182,21 @@ void KankerApp::drawHelperLines() {
 
 void KankerApp::drawStateCharEdit() {
   
+  /* Base helper lines. */
   drawHelperLines();
+
+  /* The advance-x marker. */
+  if (is_mouse_inside_advance) {
+    painter.hex("79BD8F");
+
+  }
+  else {
+    painter.hex("00A388");
+  }
+
+  advance_x = CLAMP(advance_x, gui_width, painter.width() - gui_width);
+  painter.line(advance_x, 0, advance_x, painter.height());
+  painter.rect(gui_width,  0, (advance_x - gui_width), 50); 
 
   if (is_mouse_inside_char) {
     painter.hex("FFFFFF");
@@ -194,41 +210,22 @@ void KankerApp::drawStateCharEdit() {
   painter.draw();
   
   drawGui();
+
+  info_font.draw(10, painter.height() - 30);
 }
 
-void KankerApp::drawStateGlyphSelection() {
+void KankerApp::drawStateCharPreview() {
 
-  kanker_drawer.update();
+  preview_drawer.update();
+  preview_drawer.renderAndDraw(0, 0);
+  drawGui();
+}
 
-  int w = 1024;
-  int h = painter.height();
-  int num = 5;
-  int cell_w = w / num;
-  int cell_h = h / num;
-  //char * letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  const char* letters = "abcdefghijklmnopqrstuvwxyz";
-  int len = strlen(letters) - 1;
+void KankerApp::drawStateCharOverview() {
 
-  for (int j = 0; j < num; ++j) {
-    for (int i = 0; i < num; ++i) {
-
-      int dx = j * num + i;
-      if (dx > len) {
-        break;
-      }
-
-      KankerGlyph* glyph = kanker_font.getGlyph(letters[dx]);
-      if (NULL == glyph) {
-        continue;
-      }
-      if (0 == glyph->segments.size()) {
-        continue;
-      }
-      
-      kanker_drawer.updateVertices(glyph);
-      kanker_drawer.renderAndDraw(i * cell_w, j * cell_h);      
-    }
-  }
+  tiny_drawer.renderAndDraw(0, 0);
+  drawGui();
+  info_font.draw(10, painter.height() - 30);
 }
 
 void KankerApp::drawGui() {
@@ -248,8 +245,7 @@ void KankerApp::drawGui() {
 void KankerApp::switchState(int newstate) {
 
   if (newstate == state) {
-    printf("warning: trying to switch to the same state? %d\n", state);
-    return;
+    RX_VERBOSE("warning: trying to switch to the same state? %d\n", state);
   }
 
   state = newstate;
@@ -263,6 +259,34 @@ void KankerApp::switchState(int newstate) {
       info_font.write("Drag with the mouse to add points to the character. "
                       "Press backspace to restart. Space when happy with the character.");
       verbose_font.write((char)kanker_glyph->charcode);
+      break;
+    }
+    case KSTATE_CHAR_EDIT: {
+      info_font.write("Position the origin (dot) and set advance-x. Press space when ready.");
+      if (kanker_glyph) {
+        if (kanker_glyph->advance_x == 0.0f) {
+          advance_x = kanker_glyph->min_x + kanker_glyph->width;
+          advance_x = CLAMP(advance_x, gui_width, painter.width() - gui_width);
+        }
+        else {
+          advance_x = gui_width + kanker_glyph->advance_x;
+        }
+      }
+      break;
+    }
+    case KSTATE_CHAR_PREVIEW: {
+      if (kanker_glyph) {
+        preview_drawer.updateVertices(kanker_glyph);
+      }
+      else {
+        RX_WARNING("Chaning to preview state, but the glyph is NULL.");
+      }
+      break;
+    }
+    case KSTATE_CHAR_OVERVIEW: {
+      glyph_dx = -1;
+      onKeyRelease(GLFW_KEY_RIGHT, 0, 0);
+      info_font.write("Press left and right arrows to switch character.");
       break;
     }
     default: {
@@ -279,7 +303,7 @@ void KankerApp::onChar(unsigned int key) {
     case KSTATE_CHAR_INPUT_TITLE: {
       kanker_glyph = kanker_font.getGlyph(key);
       if (NULL == kanker_glyph) {
-        printf("error: not supposed to happen, but the font couldn't create of find a the glyph.\n");
+        RX_ERROR("error: not supposed to happen, but the font couldn't create of find a the glyph.");
         return;
       }
       switchState(KSTATE_CHAR_INPUT_DRAWING);
@@ -303,11 +327,49 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
         }
       }
       else if (GLFW_KEY_SPACE == key) {
-        //switchState(KSTATE_CHAR_INPUT_TITLE);
         switchState(KSTATE_CHAR_EDIT);
       }
       break;
     }
+    case KSTATE_CHAR_EDIT: {
+      if (GLFW_KEY_SPACE == key) {
+        switchState(KSTATE_CHAR_PREVIEW);
+      }
+      break;
+    }
+    case KSTATE_CHAR_OVERVIEW: {
+      if (0 != kanker_font.glyphs.size()) {
+        if (GLFW_KEY_RIGHT == key) {
+          if (glyph_dx == allowed_chars.size() - 1) {
+            glyph_dx = -1;
+          }
+          for (ssize_t i = glyph_dx + 1; i < allowed_chars.size(); ++i) {
+            glyph_dx = i;
+            KankerGlyph* glyph = kanker_font.getGlyph(allowed_chars[i]);
+            if (NULL != glyph) {
+              tiny_drawer.updateVertices(glyph);
+              break;
+            }
+          }
+        }
+        else if (GLFW_KEY_LEFT == key) {
+          if (0 == glyph_dx) {
+            glyph_dx = allowed_chars.size();
+          }
+          for (ssize_t i = glyph_dx - 1; i >= 0; --i) {
+            glyph_dx = i;
+            KankerGlyph* glyph = kanker_font.getGlyph(allowed_chars[i]);
+            if (NULL != glyph) {
+              tiny_drawer.updateVertices(glyph);
+              break;
+            }
+          }
+
+        }
+      } /* 0 != kanker_font.glyphs.size() */
+      break;
+    }
+
     default: {
       break;
     }
@@ -337,10 +399,10 @@ void KankerApp::onMouseMove(double x, double y) {
     }
     case KSTATE_CHAR_EDIT: {
       if (kanker_glyph) {
+        
         if (is_mouse_inside_char && is_mouse_pressed) {
           char_offset_x = x - mouse_down_x;
           char_offset_y = y - mouse_down_y;
-          //          printf("DX: %f, DY: %f\n", dx, dy);
           return;
         }
 
@@ -349,6 +411,17 @@ void KankerApp::onMouseMove(double x, double y) {
         }
         else { 
           is_mouse_inside_char = false;
+        }
+
+        if (is_mouse_inside_advance && is_mouse_pressed) {
+          advance_x = x;
+        }
+        
+        if (IS_INSIDE(x, y, gui_width, 0, (advance_x - gui_width), 50)) {
+          is_mouse_inside_advance = true;
+        }
+        else {
+          is_mouse_inside_advance = false;
         }
       }
       break;
@@ -405,10 +478,16 @@ void KankerApp::onMouseRelease(double x, double y, int bt, int mods) {
     }
     case KSTATE_CHAR_EDIT: {
       if (is_mouse_inside_char) {
+        if (kanker_glyph) {
+          kanker_glyph->translate(char_offset_x, char_offset_y);
+        }
         is_mouse_inside_char = false;
-        kanker_glyph->translate(char_offset_x, char_offset_y);
         char_offset_x = 0.0f;
         char_offset_y = 0.0f;
+      }
+
+      if (kanker_glyph) {
+        kanker_glyph->advance_x = advance_x - gui_width;
       }
       break;
     }
@@ -424,7 +503,7 @@ static void on_add_characters_clicked(int id, void* user) {
 
   KankerApp* app = static_cast<KankerApp*>(user);
   if (NULL == app) {
-    printf("error: cannot cast to KankerApp*.\n");
+    RX_ERROR("error: cannot cast to KankerApp*.");
     return;
   }
 
@@ -435,14 +514,16 @@ static void on_save_clicked(int id, void* user) {
 
   KankerApp* app = static_cast<KankerApp*>(user);
   if (NULL == app) {
-    printf("error: cannot cast to KankerApp* in on_save_clicked().\n");
+    RX_ERROR("error: cannot cast to KankerApp* in on_save_clicked().");
     return;
   }
 
   if (0 == app->font_filename.size()) {
-    printf("No filename entered. Cannot save.\n");
+    RX_ERROR("No filename entered. Cannot save.");
     return;
   }
+
+  RX_VERBOSE("saving file: %s", app->font_filename.c_str());
 
   app->kanker_font.save(rx_to_data_path("fonts/" +app->font_filename));
 }
@@ -451,7 +532,7 @@ static void on_file_selected(int selectid, int optionid, void* user) {
 
   KankerApp* app = static_cast<KankerApp*>(user);
   if (NULL == app) {
-    printf("error: cannot cast to KankerApp* in on_file_selected().\n");
+    RX_ERROR("error: cannot cast to KankerApp* in on_file_selected().");
     return;
   }
 
@@ -462,30 +543,35 @@ static void on_load_clicked(int id, void* user) {
 
   KankerApp* app = static_cast<KankerApp*>(user);
   if (NULL == app) {
-    printf("error: cannot cast to KankerApp* in on_file_selected().\n");
+    RX_ERROR("error: cannot cast to KankerApp* in on_file_selected().");
     return;
   }
 
   std::vector<std::string> files;
   if (0 != app->getFontFiles(files)) {
-    printf("error: cannot load font, file not found.\n");
+    RX_ERROR("error: cannot load font, file not found.");
     return;
   }
 
   if (app->selected_font_dx >= files.size()) {
-    printf("error: selected font dx is too big: %d, files.size() = %lu\n", app->selected_font_dx, files.size());
+    RX_ERROR("error: selected font dx is too big: %d, files.size() = %lu.", app->selected_font_dx, files.size());
     return;
   }
 
   std::string filepath = rx_to_data_path("fonts/" +files[app->selected_font_dx]);
   if (!rx_file_exists(filepath)) {
-    printf("erorr: cannot load file; file seems to be removed?\n");
+    RX_ERROR("error: cannot load file; file seems to be removed?");
     return;
   }
   
   if (0 != app->kanker_font.load(filepath)) {
-    printf("error: font failed to load: %s\n", filepath.c_str());
+    RX_ERROR("error: font failed to load: %s\n", filepath.c_str());
+    return;
   }
+
+  app->font_filename = files[app->selected_font_dx];
+
+  app->switchState(KSTATE_CHAR_OVERVIEW);
 }
 
 /* ------------------------------------------------------------------------------------ */

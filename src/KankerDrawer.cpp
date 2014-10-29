@@ -32,11 +32,11 @@ KankerDrawer::~KankerDrawer() {
 
 int KankerDrawer::init(int rttWidth, int rttHeight, int winWidth, int winHeight) {
 
-  if (0 != geom_vao) {  printf("error: looks like we're already initialized in KankerDrawer.\n");  return -1;  }
-  if (0 >= rttWidth) {  printf("error: invalid rtt width: %d\n", rttWidth);  return -2;   }
-  if (0 >= rttHeight) { printf("error: invalid rtt height: %d\n", rttHeight);  return -3;  }
-  if (0 >= winWidth) { printf("error: invalid win width.\n"); return -4; } 
-  if (0 >= winHeight) { printf("error: invalid win height.\n"); return -5; } 
+  if (0 != geom_vao) {  RX_ERROR("error: looks like we're already initialized in KankerDrawer.");  return -1;  }
+  if (0 >= rttWidth) {  RX_ERROR("error: invalid rtt width: %d", rttWidth);  return -2;   }
+  if (0 >= rttHeight) { RX_ERROR("error: invalid rtt height: %d", rttHeight);  return -3;  }
+  if (0 >= winWidth) { RX_ERROR("error: invalid win width."); return -4; } 
+  if (0 >= winHeight) { RX_ERROR("error: invalid win height."); return -5; } 
 
   rtt_width = rttWidth;
   rtt_height = rttHeight;
@@ -67,7 +67,7 @@ int KankerDrawer::init(int rttWidth, int rttHeight, int winWidth, int winHeight)
   u_vm = glGetUniformLocation(geom_prog, "u_vm");
 
   if (-1 == u_pm || -1 == u_mm || -1 == u_vm) {
-    printf("error: cannot get uniforms, u_pm: %d, u_mm: %d, u_vm: %d\n", u_pm, u_mm, u_vm);
+    RX_ERROR("error: cannot get uniforms, u_pm: %d, u_mm: %d, u_vm: %d.", u_pm, u_mm, u_vm);
     /* @todo cleanup. */
     return -2;
   }
@@ -85,7 +85,7 @@ int KankerDrawer::init(int rttWidth, int rttHeight, int winWidth, int winHeight)
   int w, h, channels;
   rx_load_png(rx_to_data_path("light.png"), &pixels, w, h, channels);
   if (NULL == pixels) {
-    printf("error: cannot load the pixels for the light streak.\n");
+    RX_ERROR("error: cannot load the pixels for the light streak.");
     exit(EXIT_FAILURE);
   }
   
@@ -102,7 +102,7 @@ int KankerDrawer::init(int rttWidth, int rttHeight, int winWidth, int winHeight)
   glUniform1i(glGetUniformLocation(geom_prog, "u_tex"), 0);
 
   if (0 != blur.init(rtt_width, rtt_height, 5.0f)) {
-    printf("error: failed to initialize the blurfbo.\n");
+    RX_ERROR("error: failed to initialize the blurfbo.");
     exit(EXIT_FAILURE);
   }
 
@@ -123,7 +123,7 @@ int KankerDrawer::init(int rttWidth, int rttHeight, int winWidth, int winHeight)
   w = h = channels = 0;
   rx_load_png(rx_to_data_path("bg.png"), &pixels, w, h, channels);
   if (NULL == pixels) {
-    printf("error: cannot load the pixels for the light streak.\n");
+    RX_ERROR("error: cannot load the pixels for the light streak.");
     exit(EXIT_FAILURE);
   }
   
@@ -159,11 +159,10 @@ void KankerDrawer::renderToTexture() {
   /* Draw textured version. */
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, geom_tex);
-
   
   glUniformMatrix4fv(u_mm, 1, GL_FALSE, mm.ptr());
   glUniform1f(glGetUniformLocation(geom_prog, "u_time"), rx_millis());
-
+  
   fbo.bind();
   {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -209,12 +208,12 @@ void KankerDrawer::draw(int x, int y) {
 int KankerDrawer::updateVertices(KankerGlyph* glyph) {
 
   if (NULL == glyph) {
-    printf("error: invalid glyph given to updateVertices, is null.\n");
+    RX_ERROR("error: invalid glyph given to updateVertices, is null.");
     return -1;
   }
 
   if (0 == glyph->segments.size()) {
-    printf("error: no segments in the glyph, cannot update vertices.\n");
+    RX_ERROR("error: no segments in the glyph, cannot update vertices.");
     return -2;
   }
 
@@ -224,9 +223,9 @@ int KankerDrawer::updateVertices(KankerGlyph* glyph) {
 
   glyph->normalize();
 
-  for (size_t i = 0; i < glyph->segments.size(); ++i) {
+  for (size_t i = 0; i < glyph->normalized_segments.size(); ++i) {
 
-    LineSegment* seg = glyph->segments[i];
+    LineSegment* seg = glyph->normalized_segments[i];
     if (0 == seg->points.size()) {
       continue;
     }
@@ -266,12 +265,10 @@ int KankerDrawer::updateVertices(KankerGlyph* glyph) {
   }
 
   if (0 == vertices.size()) {
-    printf("error: no vertices found in KankerDrawer (?).\n");
+    RX_ERROR("error: no vertices found in KankerDrawer (?).");
     return -3;
   }
 
-  //printf("offsets: %lu, counts: %lu, vertices: %lu\n", offsets.size(), counts.size(), vertices.size());
-  
   glBindVertexArray(geom_vao);
   glBindBuffer(GL_ARRAY_BUFFER, geom_vbo);
   

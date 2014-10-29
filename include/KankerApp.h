@@ -16,6 +16,7 @@
 #define ROXLU_USE_MATH
 #define ROXLU_USE_OPENGL
 #define ROXLU_USE_PNG
+#define ROXLU_USE_LOG
 #include <glad/glad.h>
 #include <tinylib.h>
 
@@ -26,7 +27,9 @@ enum {
   KSTATE_HOME,                                                                 /* Main screen. */ 
   KSTATE_CHAR_INPUT_TITLE,                                                     /* Shows a title, asks the user to press a key */
   KSTATE_CHAR_INPUT_DRAWING,                                                   /* User can draw the strokes */
-  KSTATE_CHAR_EDIT                                                             /* Change the baseline, advance-x etc.. */
+  KSTATE_CHAR_EDIT,                                                            /* Change the baseline, advance-x etc.. */
+  KSTATE_CHAR_PREVIEW,                                                         /* Preview the current character. */
+  KSTATE_CHAR_OVERVIEW                                                         /* Shows all glyphs */
 };
 
 class KankerApp {
@@ -55,7 +58,8 @@ class KankerApp {
   void drawStateCharInputTitle();
   void drawStateCharInputDrawing();
   void drawStateCharEdit();
-  void drawStateGlyphSelection();                                               /* Allows the user to select a glyph to edit. */
+  void drawStateCharOverview();                                                 /* Allows the user to select a glyph to edit. */
+  void drawStateCharPreview();                                                  /* Draw a preview. */ 
 
   /* Helpers. */
   void drawHelperLines();
@@ -69,19 +73,24 @@ class KankerApp {
   Painter painter;                                                              /* Used when drawing the captured input. */
   KankerFont kanker_font;                                                       
   KankerGlyph* kanker_glyph;                                                    
-  KankerDrawer kanker_drawer;                                                   /* Used to draw the glyphs in a more interesting way. */
+  KankerDrawer tiny_drawer;                                                     /* Used to draw the glyphs in a more interesting way. */
+  KankerDrawer preview_drawer;                                                  /* Used to draw the preview of the character. */
   bool is_mouse_pressed;                                                        /* Is set to true when the user pressed the mouse */
   Container* gui_home;                                                          
   int gui_width;                                                                
   std::string font_filename;                                                    
   int selected_font_dx;                                                         /* Used when loading a font. */
+  std::string allowed_chars;
+  ssize_t glyph_dx;                                                              /* Used when showing a loaded font.  Points to a glyph index. */
   
   /* edit state */
   bool is_mouse_inside_char;
+  bool is_mouse_inside_advance;                                                 /* Is the mouse inside the advance_x area, to manipulate the advance pos. */
   float mouse_down_x;
   float mouse_down_y;
   float char_offset_x;
   float char_offset_y;
+  float advance_x;
 };
 
 #endif

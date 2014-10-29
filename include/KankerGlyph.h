@@ -17,25 +17,27 @@ class KankerGlyph {
   ~KankerGlyph();
   void addPoint(vec3& v);
   void addPoint(float x, float y, float z = 0.0);
-  void clear();                                       /* Removes all line segments / points .. */
   void onStartLine();                                 /* Must be called in input mode, when the user starts drawing a line. A glyph can contain multiple lines. */
   void onEndLine();                                   /* Must be called in input mode, when the user ends drawing a line. A glyph can contain multiple lines. */
   void normalize();                                   /* Normalizes the points of all segments. */ 
   vec4 getBoundingBox();                              /* Returns the bounding box of all points. */
   void translate(float x, float y);                   /* Translate all points by the given x and y. This will actually change the point values.*/
+  void clear();                                       /* Removes all line segments / points, normalized points and segments .. */
+  void clearSegments();                               /* Removes the line segments */
+  void clearNormalizedSegments();                     /* Removes all the normalized line */
 
  public:
-  bool is_normalized;
   int charcode;
   LineSegment* curr_segment;
   std::vector<LineSegment*> segments;
+  std::vector<LineSegment*> normalized_segments;
   float min_x; 
   float min_y;
   float max_x;
   float max_y;
   float width;
   float height;
-  
+  float advance_x;
 };
 
 inline void KankerGlyph::addPoint(vec3& v) {

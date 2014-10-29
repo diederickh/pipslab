@@ -15,6 +15,7 @@
 #define ROXLU_USE_MATH
 #define ROXLU_USE_PNG
 #define ROXLU_USE_OPENGL
+#define ROXLU_USE_LOG
 #include <glad/glad.h>
 #include <tinylib.h>
 
@@ -35,7 +36,6 @@ static const char* KANKER_VS = ""
   ""
   "void main() { "
   "  vec4 pos = a_pos;"
-  //  "  pos.x = a_pos.x + (0.5 * sin(15.0 * pos.y));"
   "  gl_Position = u_pm * u_vm * u_mm * pos; "
   "  v_tex = a_tex;"
   "}"
@@ -72,8 +72,6 @@ static const char* KANKER_MIX_FS = ""
   "void main() {"
   "  vec4 blur_col = texture(u_blur_tex, v_texcoord);"
   "  vec4 scene_col = texture(u_scene_tex, v_texcoord);"
-  //  "  vec4 bg_col = texture(u_bg_tex, v_texcoord);"
-
   "  fragcolor = vec4(1.0, 0.0, 0.0, 1.0);"
   "  fragcolor = 0.6 * vec4(blur_col.r) + (3.4 * scene_col);"
   "}"
