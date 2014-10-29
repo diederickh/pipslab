@@ -344,7 +344,7 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
           if (glyph_dx == allowed_chars.size() - 1) {
             glyph_dx = -1;
           }
-          for (ssize_t i = glyph_dx + 1; i < allowed_chars.size(); ++i) {
+          for (int64_t i = glyph_dx + 1; i < allowed_chars.size(); ++i) {
             glyph_dx = i;
             KankerGlyph* glyph = kanker_font.getGlyph(allowed_chars[i]);
             if (NULL != glyph) {
@@ -357,7 +357,7 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
           if (0 == glyph_dx) {
             glyph_dx = allowed_chars.size();
           }
-          for (ssize_t i = glyph_dx - 1; i >= 0; --i) {
+          for (int64_t i = glyph_dx - 1; i >= 0; --i) {
             glyph_dx = i;
             KankerGlyph* glyph = kanker_font.getGlyph(allowed_chars[i]);
             if (NULL != glyph) {
@@ -365,7 +365,6 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
               break;
             }
           }
-
         }
       } /* 0 != kanker_font.glyphs.size() */
       break;

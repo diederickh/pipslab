@@ -1,8 +1,8 @@
 #ifndef KANKER_APP_H
 #define KANKER_APP_H
 
-
 #include <stdio.h>
+#include <stdint.h>
 #include <string>
 #include <vector>
 #include <FreetypeFont.h>
@@ -81,7 +81,7 @@ class KankerApp {
   std::string font_filename;                                                    
   int selected_font_dx;                                                         /* Used when loading a font. */
   std::string allowed_chars;
-  ssize_t glyph_dx;                                                              /* Used when showing a loaded font.  Points to a glyph index. */
+  int64_t glyph_dx;                                                             /* Used when showing a loaded font.  Points to a glyph index. */
   
   /* edit state */
   bool is_mouse_inside_char;
