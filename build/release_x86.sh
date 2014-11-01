@@ -26,8 +26,14 @@ fi
 extern_path=${d}/../extern/${triplet}
 install_path=${d}/../install/${triplet}
 
+# Checkout the dependencies module
+if [ ! -d ${d}/dependencies ] ; then
+    git clone git@github.com:roxlu/dependencies.git
+fi
+
 # Check if extern dir is created and if not, compile dependencies.
-if [ -d ${extern_path} ] ; then
+if [ ! -d ${extern_path} ] ; then
+
 
     if [ "${is_linux}" = "y" ] ; then
         ./dependencies/build_unix_dependencies.sh

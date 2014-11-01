@@ -2,6 +2,7 @@
 #define KANKER_APP_H
 
 #include <stdio.h>
+#include <stdint.h>
 #include <string>
 #include <vector>
 #include <FreetypeFont.h>
@@ -80,7 +81,7 @@ class KankerApp {
   std::string font_filename;                                                    /* The last set or loaded file name. */
   int selected_font_dx;                                                         /* Used when loading a font. */
   ssize_t glyph_dx;                                                             /* Used when showing a loaded font.  Points to a glyph index. */
-  
+
   /* edit state */
   bool is_mouse_inside_char;
   bool is_mouse_inside_advance;                                                 /* Is the mouse inside the advance_x area, to manipulate the advance pos. */
