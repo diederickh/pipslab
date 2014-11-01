@@ -25,10 +25,11 @@ KankerApp::KankerApp()
   ,char_offset_y(0)
   ,advance_x(0)
 {
-  allowed_chars = "abcdefghijklmnopqrstuvwxyz";
 }
 
 KankerApp::~KankerApp() {
+  delete gui_home;
+  gui_home = NULL;
 }
 
 int KankerApp::init() {
@@ -105,6 +106,27 @@ int KankerApp::getFontFiles(std::vector<std::string>& files) {
 
 void KankerApp::draw() {
 
+#if 0
+  /* generate a string. */
+  std::vector<std::vector<vec3> > v;
+  kanker_font.write("diederick", v);
+  if (0 != v.size()) {
+    float offsetX = -150.0;
+    float offsetY = 0.0;
+    painter.clear();
+    for (size_t i = 0; i < v.size(); ++i) {
+      std::vector<vec3>& points = v[i];
+      for (size_t j = 0; j < points.size() - 1; ++j) {
+        vec3& a = points[j];
+        vec3& b = points[j + 1];
+        painter.line(a.x + offsetX, a.y + offsetY, b.x + offsetX, b.y + offsetY);
+      }
+    }
+    painter.draw();
+    return;
+  }
+#endif
+
   switch (state) {
     case KSTATE_HOME:               { drawStateHome();             break;    }
     case KSTATE_CHAR_INPUT_TITLE:   { drawStateCharInputTitle();   break;    }
@@ -154,14 +176,14 @@ void KankerApp::drawGlyphAsLine(KankerGlyph* glyph, float offsetX, float offsetY
 
   for (size_t i = 0; i < glyph->segments.size(); ++i) {
 
-    LineSegment* seg = glyph->segments[i];
-    if (seg->points.size() < 2) {
+    std::vector<vec3>& seg = glyph->segments[i];
+    if (seg.size() < 2) {
       continue;
     }
 
-    for (size_t j = 0; j < seg->points.size() - 1; ++j) {
-      vec3& a = seg->points[j];
-      vec3& b = seg->points[j + 1];
+    for (size_t j = 0; j < seg.size() - 1; ++j) {
+      vec3& a = seg[j];
+      vec3& b = seg[j + 1];
       painter.line(a.x + offsetX, a.y + offsetY, b.x + offsetX, b.y + offsetY);
     }
   }
@@ -245,7 +267,7 @@ void KankerApp::drawGui() {
 void KankerApp::switchState(int newstate) {
 
   if (newstate == state) {
-    RX_VERBOSE("warning: trying to switch to the same state? %d\n", state);
+    RX_VERBOSE("warning: trying to switch to the same state? %d", state);
   }
 
   state = newstate;
@@ -276,10 +298,11 @@ void KankerApp::switchState(int newstate) {
     }
     case KSTATE_CHAR_PREVIEW: {
       if (kanker_glyph) {
-        preview_drawer.updateVertices(kanker_glyph);
+        KankerGlyph copy = *kanker_glyph;
+        preview_drawer.updateVertices(copy);
       }
       else {
-        RX_WARNING("Chaning to preview state, but the glyph is NULL.");
+        RX_WARNING("Changing to preview state, but the glyph is NULL.");
       }
       break;
     }
@@ -301,7 +324,7 @@ void KankerApp::onChar(unsigned int key) {
 
   switch (state) {
     case KSTATE_CHAR_INPUT_TITLE: {
-      kanker_glyph = kanker_font.getGlyph(key);
+      kanker_glyph = kanker_font.getGlyphByCharCode(key);
       if (NULL == kanker_glyph) {
         RX_ERROR("error: not supposed to happen, but the font couldn't create of find a the glyph.");
         return;
@@ -340,36 +363,29 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
     case KSTATE_CHAR_OVERVIEW: {
       if (0 != kanker_font.glyphs.size()) {
         if (GLFW_KEY_RIGHT == key) {
-          if (glyph_dx == allowed_chars.size() - 1) {
-            glyph_dx = -1;
-          }
-          for (ssize_t i = glyph_dx + 1; i < allowed_chars.size(); ++i) {
-            glyph_dx = i;
-            KankerGlyph* glyph = kanker_font.getGlyph(allowed_chars[i]);
-            if (NULL != glyph) {
-              tiny_drawer.updateVertices(glyph);
-              break;
-            }
+          ++glyph_dx %= kanker_font.size();
+          KankerGlyph* glyph = kanker_font.getGlyphByIndex(glyph_dx);
+          if (NULL != glyph) {
+            tiny_drawer.updateVertices(*glyph);
+            break;
           }
         }
         else if (GLFW_KEY_LEFT == key) {
           if (0 == glyph_dx) {
-            glyph_dx = allowed_chars.size();
+            glyph_dx = kanker_font.size() - 1;
           }
-          for (ssize_t i = glyph_dx - 1; i >= 0; --i) {
-            glyph_dx = i;
-            KankerGlyph* glyph = kanker_font.getGlyph(allowed_chars[i]);
-            if (NULL != glyph) {
-              tiny_drawer.updateVertices(glyph);
-              break;
-            }
+          else {
+            glyph_dx--;
           }
-
+          KankerGlyph* glyph = kanker_font.getGlyphByIndex(glyph_dx);
+          if (NULL != glyph) {
+            tiny_drawer.updateVertices(*glyph);
+            break;
+          }
         }
       } /* 0 != kanker_font.glyphs.size() */
       break;
     }
-
     default: {
       break;
     }
@@ -572,6 +588,11 @@ static void on_load_clicked(int id, void* user) {
   app->font_filename = files[app->selected_font_dx];
 
   app->switchState(KSTATE_CHAR_OVERVIEW);
+
+  
+
+  // std::vector<std::vector<KankerVertex> > vertices;
+  // app->kanker_font.generateVerticesForText("abc", vertices);
 }
 
 /* ------------------------------------------------------------------------------------ */

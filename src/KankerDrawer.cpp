@@ -205,14 +205,9 @@ void KankerDrawer::draw(int x, int y) {
   glViewport(0, 0, win_width, win_height);
 }
 
-int KankerDrawer::updateVertices(KankerGlyph* glyph) {
+int KankerDrawer::updateVertices(KankerGlyph glyph) {
 
-  if (NULL == glyph) {
-    RX_ERROR("error: invalid glyph given to updateVertices, is null.");
-    return -1;
-  }
-
-  if (0 == glyph->segments.size()) {
+  if (0 == glyph.segments.size()) {
     RX_ERROR("error: no segments in the glyph, cannot update vertices.");
     return -2;
   }
@@ -221,26 +216,23 @@ int KankerDrawer::updateVertices(KankerGlyph* glyph) {
   offsets.clear();
   counts.clear();
 
-  glyph->normalize();
+  glyph.normalizeAndCentralize();
 
-  for (size_t i = 0; i < glyph->normalized_segments.size(); ++i) {
+  for (size_t i = 0; i < glyph.segments.size(); ++i) {
 
-    LineSegment* seg = glyph->normalized_segments[i];
-    if (0 == seg->points.size()) {
+    std::vector<vec3>& points = glyph.segments[i];
+    if (points.size() < 2) {
+      RX_VERBOSE("Not engouh points in glyph segment, segment: %lu", i);
       continue;
     }
 
     offsets.push_back(vertices.size());
 
-    if (seg->points.size() < 2) {
-      continue;
-    }
+    for (size_t k = 1; k < points.size() - 1; ++k) {
 
-    for (size_t k = 1; k < seg->points.size() - 1; ++k) {
-
-      float p = float(k-1)/(seg->points.size()-2);
-      vec3& a = seg->points[k - 1];
-      vec3& b = seg->points[k];
+      float p = float(k-1)/(points.size()-2);
+      vec3& a = points[k - 1];
+      vec3& b = points[k];
       vec3 dir = b - a;
       vec3 up(0.0, 0.0, 1.0);
       vec3 crossed = normalized(cross(dir, up));
@@ -283,4 +275,5 @@ int KankerDrawer::updateVertices(KankerGlyph* glyph) {
 
   return 0;
 }
+
 

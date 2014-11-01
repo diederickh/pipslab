@@ -62,3 +62,4 @@ cmake --build . --target install --config Release
 
 cd ./../../install/${triplet}/bin/
 ./kankerfont
+# ./kankerabb

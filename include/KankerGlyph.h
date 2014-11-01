@@ -3,34 +3,35 @@
 
 #define ROXLU_USE_MATH
 #include <tinylib.h>
-
 #include <stdio.h>
 #include <vector>
 
-struct LineSegment {
-  std::vector<vec3> points;
-};
+#define ROXLU_USE_MATH
+#define ROXLU_USE_LOG
+#include <tinylib.h>
 
 class KankerGlyph {
+
  public:
   KankerGlyph(int charcode);
+  KankerGlyph(KankerGlyph& other);
+  KankerGlyph& operator=(KankerGlyph& other);
   ~KankerGlyph();
   void addPoint(vec3& v);
   void addPoint(float x, float y, float z = 0.0);
   void onStartLine();                                 /* Must be called in input mode, when the user starts drawing a line. A glyph can contain multiple lines. */
   void onEndLine();                                   /* Must be called in input mode, when the user ends drawing a line. A glyph can contain multiple lines. */
-  void normalize();                                   /* Normalizes the points of all segments. */ 
-  vec4 getBoundingBox();                              /* Returns the bounding box of all points. */
-  void translate(float x, float y);                   /* Translate all points by the given x and y. This will actually change the point values.*/
   void clear();                                       /* Removes all line segments / points, normalized points and segments .. */
-  void clearSegments();                               /* Removes the line segments */
-  void clearNormalizedSegments();                     /* Removes all the normalized line */
+  void print();                                       /* Prints out some info about the glyph. */
+
+  void centralize();                                  /* Centralizes the vertices. */
+  void normalize();                                   /* Normalizes the points of all segments. */ 
+  void normalizeAndCentralize();                      /* The order in which we normalize/centralize is important; this function will make sure that the glyph is correctly positioned at 0,0 and can be displayed with e.g. openGL. */
+  void translate(float x, float y);                   /* Translate all points by the given x and y. This will actually change the point values.*/
 
  public:
+  std::vector<std::vector<vec3> > segments;
   int charcode;
-  LineSegment* curr_segment;
-  std::vector<LineSegment*> segments;
-  std::vector<LineSegment*> normalized_segments;
   float min_x; 
   float min_y;
   float max_x;
@@ -41,12 +42,11 @@ class KankerGlyph {
 };
 
 inline void KankerGlyph::addPoint(vec3& v) {
-  addPoint(v.x, v.y, v.z);
 
+  addPoint(v.x, v.y, v.z);
 }
 
 inline void KankerGlyph::addPoint(float x, float y, float z) {
-
 
   if (x > max_x) {
     max_x = x;
@@ -65,12 +65,13 @@ inline void KankerGlyph::addPoint(float x, float y, float z) {
     height = max_y - min_y;
   }
 
-  if (NULL == curr_segment) {
-    printf("error: cannot add point to glyph, because there is no segment. Did you call createLineSegment? \n");
-    return;
+  if (0 == segments.size()) {
+    RX_VERBOSE("No segments found yet, not supposed to happen be we will create one.");
+    std::vector<vec3> segment;
+    segments.push_back(segment);
   }
-  //printf("Adding: %f, %f\n", x, y);
-  curr_segment->points.push_back(vec3(x,y,z));
+
+  segments.back().push_back(vec3(x, y, z));
 }
 
 #endif

@@ -1,7 +1,6 @@
 #ifndef KANKER_APP_H
 #define KANKER_APP_H
 
-
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -71,17 +70,16 @@ class KankerApp {
   FreetypeFont info_font;                                                       /* Used to show some info on screen. */
   FreetypeFont verbose_font;                                                    /* Used to show what character is select and maybe some more specs. */
   Painter painter;                                                              /* Used when drawing the captured input. */
-  KankerFont kanker_font;                                                       
-  KankerGlyph* kanker_glyph;                                                    
+  KankerFont kanker_font;                                                       /* The font we're adding glyphs to. */
+  KankerGlyph* kanker_glyph;                                                    /* The current glyph to which points are added */
   KankerDrawer tiny_drawer;                                                     /* Used to draw the glyphs in a more interesting way. */
   KankerDrawer preview_drawer;                                                  /* Used to draw the preview of the character. */
   bool is_mouse_pressed;                                                        /* Is set to true when the user pressed the mouse */
-  Container* gui_home;                                                          
-  int gui_width;                                                                
-  std::string font_filename;                                                    
+  Container* gui_home;                                                          /* The gui container. */
+  int gui_width;                                                                /* The width of the gui, used to position some graphical elements */ 
+  std::string font_filename;                                                    /* The last set or loaded file name. */
   int selected_font_dx;                                                         /* Used when loading a font. */
-  std::string allowed_chars;
-  ssize_t glyph_dx;                                                              /* Used when showing a loaded font.  Points to a glyph index. */
+  ssize_t glyph_dx;                                                             /* Used when showing a loaded font.  Points to a glyph index. */
   
   /* edit state */
   bool is_mouse_inside_char;

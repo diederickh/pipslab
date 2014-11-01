@@ -43,36 +43,32 @@ KankerFont::~KankerFont() {
 
 void KankerFont::clear() {
 
- std::map<int, KankerGlyph*>::iterator it = glyphs.begin();
-  while (it != glyphs.end()) {
-    delete it->second;
-    ++it;
+  for (size_t i = 0; i < glyphs.size(); ++i) {
+    delete glyphs[i];
   }
   glyphs.clear();
 }
 
-KankerGlyph* KankerFont::getGlyph(int charcode) {
-
-  std::map<int, KankerGlyph*>::iterator it = glyphs.find(charcode);
-
-  if (it == glyphs.end()) {
-
-    KankerGlyph* new_glyph = new KankerGlyph(charcode);
-    if (NULL == new_glyph) {
-      RX_ERROR("error: cannot allocate glyph.");
-      return NULL;
+KankerGlyph* KankerFont::getGlyphByCharCode(int charcode) {
+  
+  for (size_t i = 0; i < glyphs.size(); ++i) {
+    if (glyphs[i]->charcode == charcode) {
+      return glyphs[i];
     }
-
-    glyphs.insert(std::pair<int, KankerGlyph*>(charcode, new_glyph));
-
-    return new_glyph;
   }
 
-  return it->second;
+  KankerGlyph* new_glyph = new KankerGlyph(charcode);
+  if (NULL == new_glyph) {
+    RX_ERROR("error: cannot allocate glyph.");
+    return NULL;
+  }
+
+  glyphs.push_back(new_glyph);
+  return new_glyph;
 }
 
 int KankerFont::save(std::string filepath) {
-  
+
   if (0 == filepath.size()) {
     RX_ERROR("error: invalid filepath, is empty.");
     return -1;
@@ -89,38 +85,39 @@ int KankerFont::save(std::string filepath) {
   std::stringstream ss;
   ss << "<font>\n";
   
-  std::map<int, KankerGlyph*>::iterator it = glyphs.begin();
+   std::vector<KankerGlyph*>::iterator it = glyphs.begin();
 
   while (it != glyphs.end()) {
-
-    KankerGlyph* glyph = it->second;
+ 
+    KankerGlyph* glyph = *it;
 
     if (0 == glyph->segments.size()) {
+      ++it;
       continue;
     }
 
-    ss << "\t<glyph charcode=\"" << glyph->charcode << "\" char=\"" <<(char)glyph->charcode << "\" >\n";
+    ss << "  <glyph "
+       << " charcode=\"" << glyph->charcode << "\""
+       << " char=\""     <<(char)glyph->charcode  << "\""
+       << " advancex=\"" << glyph->advance_x  << "\""
+       << ">\n";
 
     RX_VERBOSE("writing: %c, %lu segments", (char)glyph->charcode, glyph->segments.size());
 
     for (size_t i = 0; i < glyph->segments.size(); ++i) {
+
+      ss << "    <line>\n";
       
-      LineSegment* segment = glyph->segments[i];
-      if (NULL == segment) {
-        continue;
+      std::vector<vec3>& points = glyph->segments[i];
+      for (size_t k = 0; k < points.size(); ++k) {
+        vec3& v = points[k];
+        ss << "      <p x=\"" << v.x << "\" y=\"" << v.y << "\" z=\"" << v.z << "\" />\n";
       }
 
-      ss << "\t\t<line>\n";
-
-      for (size_t k = 0; k < segment->points.size(); ++k) {
-        vec3& v = segment->points[k];
-        ss << "\t\t\t<p x=\"" << v.x << "\" y=\"" << v.y << "\" z=\"" << v.z << "\" />\n";
-      }
-
-      ss << "\t\t</line>\n";
+      ss << "    </line>\n";
     }
 
-    ss << "\t</glyph>\n";
+    ss << "  </glyph>\n";
     ++it;
   }
 
@@ -135,6 +132,31 @@ int KankerFont::save(std::string filepath) {
 
   return 0;
 }
+
+void KankerFont::write(std::string str, std::vector<std::vector<vec3> >& lines) {
+
+  float pen_x = 0.0;
+
+  for (size_t i = 0; i < str.size(); ++i) {
+
+    if (!hasGlyph(str[i])) {
+      RX_VERBOSE("The font can't create a valid string because the character '%c' is not found.", (char)str[i]);
+      continue;
+    }
+
+    KankerGlyph* g = getGlyphByCharCode(str[i]);
+    if (NULL == g) {
+      RX_ERROR("Cannot get glyph by char code... not supposed to happen.");
+      continue;
+    }
+
+    KankerGlyph glyph = *g;
+    glyph.translate(pen_x, 0);
+    std::copy(glyph.segments.begin(), glyph.segments.end(), std::back_inserter(lines));
+    pen_x += glyph.advance_x;
+  }
+}
+
 
 int KankerFont::load(std::string filepath) {
 
@@ -181,11 +203,16 @@ int KankerFont::load(std::string filepath) {
         continue;
       }
 
-      KankerGlyph* glyph = getGlyph(charcode);
+      KankerGlyph* glyph = getGlyphByCharCode(charcode);
       if (NULL == glyph) {
         RX_ERROR("error: cannot find or create the glyph for the given charcode: %d", charcode);
         glyph_el = glyph_el->next_sibling();
         continue;
+      }
+
+      glyph->advance_x = read_attribute<int>(glyph_el, "advancex", -1);
+      if (-1 == glyph->advance_x) {
+        RX_VERBOSE("No advance_x found in glyph, not set yet? Char: %c", (char)glyph->charcode);
       }
 
       /* make sure the glyph is empty. */

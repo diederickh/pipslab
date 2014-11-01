@@ -9,7 +9,6 @@
 #ifndef KANKER_DRAWER_H
 #define KANKER_DRAWER_H
 
-#include <KankerGlyph.h>
 #include <BlurFBO.h>
 
 #define ROXLU_USE_MATH
@@ -19,6 +18,8 @@
 #include <glad/glad.h>
 #include <tinylib.h>
 
+#include <KankerGlyph.h>
+//class KankerGlyph;
 typedef VertexPT KankerVertex;
 
 static const char* KANKER_VS = ""
@@ -83,9 +84,10 @@ class KankerDrawer {
   KankerDrawer();
   ~KankerDrawer();
   int init(int rttWidth, int rttHeight, int winWidth, int winHeight);
-  int updateVertices(KankerGlyph* glyph);
+  int updateVertices(KankerGlyph glyph);                                /* call this when you want to draw a single glyph. */
+  //int updateVertices(std::vector<std::vector<KankerVertex> >& data);     /* call this when you want to set the vertices we draw yourself. Each std::vector<KankerVertex> defines a line segment. */
   void update();
-  void renderToTexture();                    /* renders the glyph to a texture, that is drawn in draw(). */
+  void renderToTexture();                                                /* renders the glyph to a texture, that is drawn in draw(). */
   void draw(int x = 0, int y = 0);
   void renderAndDraw(int x, int y);
 
@@ -95,8 +97,8 @@ class KankerDrawer {
   GLuint geom_prog;
   GLuint geom_vert;
   GLuint geom_frag;
-  GLuint geom_tex;
-  GLuint mix_vao;                            /* mix, mixes blurred + front + ?? */
+  GLuint geom_tex;    
+  GLuint mix_vao;                                            /* mix, mixes blurred + front + ?? */
   GLuint mix_vert;
   GLuint mix_frag;
   GLuint mix_prog;
@@ -104,10 +106,10 @@ class KankerDrawer {
   GLint u_pm;
   GLint u_mm;
   GLint u_vm;
-  size_t capacity;                          /* number of bytes that can be stored in the VBO. */
-  mat4 mm;                                  /* model matrix */
-  mat4 pm;                                  /* projection matrix. */
-  mat4 vm;                                  /* view matrix. */
+  size_t capacity;                                           /* number of bytes that can be stored in the VBO. */
+  mat4 mm;                                                   /* model matrix */
+  mat4 pm;                                                   /* projection matrix. */
+  mat4 vm;                                                   /* view matrix. */
   int rtt_width;
   int rtt_height;
   int win_width;

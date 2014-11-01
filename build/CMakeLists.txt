@@ -65,9 +65,18 @@ elseif(WIN32)
     )
 endif()
 
+# The library
 add_library(kanker ${lib_sources})
+install(TARGETS kanker ARCHIVE DESTINATION lib)
+
+# The font creator
 add_executable(kankerfont ${sd}/main.cpp ${EXTERN_SRC_DIR}/glad.c)
 target_link_libraries(kankerfont ${app_libs} kanker)
 install(TARGETS kankerfont RUNTIME DESTINATION bin)
-install(TARGETS kanker ARCHIVE DESTINATION lib)
+
+# The ABB app.
+add_executable(kankerabb ${sd}/main_abb.cpp ${sd}/KankerAbbApp.cpp ${EXTERN_SRC_DIR}/glad.c)
+target_link_libraries(kankerabb ${app_libs} kanker)
+install(TARGETS kankerabb RUNTIME DESTINATION bin)
+
   
