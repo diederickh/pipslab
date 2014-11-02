@@ -14,14 +14,14 @@ KankerGlyph::KankerGlyph(int charcode)
 {
 }
 
-KankerGlyph::KankerGlyph(KankerGlyph& other) {
+KankerGlyph::KankerGlyph(const KankerGlyph& other) {
 
   if (&other != this) {
     *this = other;
   }
 }
 
-KankerGlyph& KankerGlyph::operator=(KankerGlyph& other) {
+KankerGlyph& KankerGlyph::operator=(const KankerGlyph& other) {
 
   segments = other.segments;
   charcode = other.charcode;
@@ -63,6 +63,8 @@ void KankerGlyph::normalizeAndCentralize() {
 
 void KankerGlyph::normalize() {
 
+  /*
+  // OLD - this will fit the character in a 1x1 box. 
   float inv_width = 1.0f / width;
   float inv_height = 1.0f / height;
   float inv = inv_width;
@@ -70,6 +72,19 @@ void KankerGlyph::normalize() {
   if (inv_height < inv_width) {
     inv = inv_height;
   }
+  inv = inv_height;
+  */
+
+#if 0
+  /* we can't use the full height because of ascenders/descenders ! */
+  float sh = height;
+  if (height > 100) {
+    sh = 100;
+  }
+  float inv = 1.0 / sh;
+#else
+  float inv = 1.0f / height;
+#endif
 
   for (size_t i = 0; i < segments.size(); ++i) {
     std::vector<vec3>& points = segments[i];
@@ -123,6 +138,88 @@ void KankerGlyph::translate(float x, float y) {
   min_y += y;
   max_y += y;
 }
+
+void KankerGlyph::scale(float s) {
+  
+  float scale_x = s;
+  float scale_y = s;
+
+  if (height > width) {
+    scale_y = s;
+    scale_x = (width / height) * s;
+  }
+  else {
+    scale_x = s;
+    scale_y = (height / width) * s;
+  }
+
+  scale_x = s;
+  scale_y = s;
+  
+  #if 0
+  printf("%c: width: %f, height: %f, scale_x: %f, scale_y: %f\n", 
+         (char)charcode, width,height,scale_x,scale_y);
+  #endif
+  
+  for (size_t i = 0; i < segments.size(); ++i) {
+    std::vector<vec3>& points = segments[i];
+    for (size_t j = 0; j < points.size(); ++j) {
+      vec3& point = points[j];
+      point.x *= scale_x;
+      point.y *= scale_y;
+    }
+  }
+
+  min_x *= scale_x;
+  max_x *= scale_x;
+  min_y *= scale_y;
+  max_y *= scale_y;
+  width *= scale_x;
+  height *= scale_y;
+  advance_x *= scale_x;
+}
+
+void KankerGlyph::flipHorizontal() {
+
+  for (size_t i = 0; i < segments.size(); ++i) {
+    std::vector<vec3>& points = segments[i];
+    for (size_t j = 0; j < points.size(); ++j) {
+      vec3& point = points[j];
+      point.y *= -1;
+    }
+  }
+}
+
+void KankerGlyph::alignLeft() {
+  
+ for (size_t i = 0; i < segments.size(); ++i) {
+    std::vector<vec3>& points = segments[i];
+    for (size_t j = 0; j < points.size(); ++j) {
+      vec3& point = points[j];
+      point.x -= min_x;
+    }
+  }
+
+ min_x = 0;
+ max_x -= min_x;
+}
+
+void KankerGlyph::alignBottom() {
+  
+ for (size_t i = 0; i < segments.size(); ++i) {
+    std::vector<vec3>& points = segments[i];
+    for (size_t j = 0; j < points.size(); ++j) {
+      vec3& point = points[j];
+      point.y -= min_y;
+    }
+  }
+
+ min_y = 0;
+ max_y -= min_y;
+
+}
+
+
 
 void KankerGlyph::print() {
 

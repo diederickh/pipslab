@@ -14,8 +14,8 @@ class KankerGlyph {
 
  public:
   KankerGlyph(int charcode);
-  KankerGlyph(KankerGlyph& other);
-  KankerGlyph& operator=(KankerGlyph& other);
+  KankerGlyph(const KankerGlyph& other);
+  KankerGlyph& operator=(const KankerGlyph& other);
   ~KankerGlyph();
   void addPoint(vec3& v);
   void addPoint(float x, float y, float z = 0.0);
@@ -28,6 +28,10 @@ class KankerGlyph {
   void normalize();                                   /* Normalizes the points of all segments. */ 
   void normalizeAndCentralize();                      /* The order in which we normalize/centralize is important; this function will make sure that the glyph is correctly positioned at 0,0 and can be displayed with e.g. openGL. */
   void translate(float x, float y);                   /* Translate all points by the given x and y. This will actually change the point values.*/
+  void scale(float s);                                /* Scale all points + members */
+  void flipHorizontal();
+  void alignLeft();                                   /* Make sure that the min_x is 0. */ 
+  void alignBottom();
 
  public:
   std::vector<std::vector<vec3> > segments;

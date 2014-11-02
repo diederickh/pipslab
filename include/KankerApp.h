@@ -9,6 +9,7 @@
 #include <KankerFont.h>
 #include <KankerGlyph.h>
 #include <KankerDrawer.h>
+#include <KankerAbb.h>
 
 #define REMOXLY_USE_OPENGL
 #include <gui/Remoxly.h>

@@ -86,6 +86,12 @@ int KankerApp::init() {
     return -1;
   }
 
+  /* TEST LOAD FONT */
+  std::string test_font = rx_to_data_path("fonts/roxlu.xml");
+  if (0 != kanker_font.load(test_font)) {
+    RX_ERROR("Cannot load: %s", test_font.c_str());
+  }
+
   return 0;
 }
 
@@ -106,6 +112,37 @@ int KankerApp::getFontFiles(std::vector<std::string>& files) {
 }
 
 void KankerApp::draw() {
+  
+#if 1
+  if (0 != kanker_font.size()) {
+    KankerAbb abb;
+    abb.init(500, 500); /* 500mm x 500mm area. */
+    std::string str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
+    str = "diederick";
+    //str = "mmmnnoo";
+    std::vector<KankerAbbGlyph> result;
+    abb.write(kanker_font, str, result);
+
+    float offsetX = 100.0;
+    float offsetY = 100.0;
+
+    painter.clear();
+    for (size_t i = 0; i < result.size(); ++i) {
+      KankerAbbGlyph& glyph = result[i];
+      for (size_t i = 0; i < glyph.segments.size(); ++i) {
+        std::vector<vec3>& points = glyph.segments[i];
+        for (size_t j = 0; j < points.size() - 1; ++j) {
+          vec3& a = points[j];
+          vec3& b = points[j + 1];
+          painter.line(a.x + offsetX, a.y + offsetY, b.x + offsetX, b.y + offsetY);
+        }
+      }
+      painter.draw();
+    }
+
+  }
+  return;
+#endif
 
 #if 0
   /* generate a string. */
@@ -191,13 +228,45 @@ void KankerApp::drawGlyphAsLine(KankerGlyph* glyph, float offsetX, float offsetY
 }
 
 void KankerApp::drawHelperLines() {
+  
+  float y = 0.0f;
 
-  painter.hex("9F39DB");
+  /* baseline */
+  painter.hex("FF0000");
   painter.line(0.0, painter.height() - gui_width, painter.width(), painter.height() - gui_width);
 
-  painter.hex("004358");
+  /* mean line */
+  painter.hex("DDDDDD");
+  y = painter.height() - (gui_width + 250);
+  painter.line(0.0, y, painter.width(), y);
+
+#if 0
+  /* descender line. */
+  painter.hex("333333");
+  y = painter.height() - (gui_width - 50);
+  painter.line(0.0, y, painter.width(), y);
+
+  /* ascender line */
+  y = painter.height() - (gui_width + 200);
+  painter.line(0.0, y, painter.width(), y);
+
+  painter.hex("333333");
+  y = painter.height() - (gui_width - 100);
+  painter.line(0.0, y, painter.width(), y);
+#endif
+
+  /* origin vertical line. */
+  painter.hex("DDDDDD");
   painter.line(gui_width, 0, gui_width, painter.height());
 
+  painter.hex("DDDDDD");
+  painter.line(gui_width + 250, 0, gui_width + 250, painter.height());
+
+  /* origin vertical line. */
+  //  painter.hex("333333");
+  //  painter.line(gui_width + 100, 0, gui_width + 100, painter.height());
+
+  /* origin point. */
   painter.hex("5D098F");
   painter.fill();
   painter.circle(gui_width, painter.height() - gui_width, 3);
@@ -294,11 +363,19 @@ void KankerApp::switchState(int newstate) {
         else {
           advance_x = gui_width + kanker_glyph->advance_x;
         }
+
+        /* Set the initial (or loaded) advance_x on the glyph. */
+        kanker_glyph->advance_x = (advance_x - gui_width);
       }
       break;
     }
     case KSTATE_CHAR_PREVIEW: {
       if (kanker_glyph) {
+
+        if (0.0f == kanker_glyph->advance_x) {
+          RX_ERROR("The glyph advance_x is 0.0 expect incorrect results..");
+        }
+
         KankerGlyph copy = *kanker_glyph;
         preview_drawer.updateVertices(copy);
       }

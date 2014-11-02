@@ -16,6 +16,7 @@ set(lib_sources
   ${sd}/BlurFBO.cpp
   ${sd}/FBO.cpp
   ${sd}/KankerApp.cpp
+  ${sd}/KankerAbb.cpp
   ${sd}/KankerFont.cpp
   ${sd}/KankerGlyph.cpp
   ${sd}/KankerDrawer.cpp

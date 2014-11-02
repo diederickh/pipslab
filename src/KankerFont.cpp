@@ -96,6 +96,10 @@ int KankerFont::save(std::string filepath) {
       continue;
     }
 
+    if (0.0f == glyph->advance_x) {
+      RX_ERROR("The advance_x of the character `%c` is 0.0.", (char)glyph->charcode);
+    }
+
     ss << "  <glyph "
        << " charcode=\"" << glyph->charcode << "\""
        << " char=\""     <<(char)glyph->charcode  << "\""
