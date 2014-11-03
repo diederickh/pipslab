@@ -22,12 +22,12 @@
 #define ROXLU_USE_OPENGL
 #define ROXLU_USE_PNG
 #define ROXLU_USE_LOG
+#define ROXLU_USE_CURL
 #define ROXLU_IMPLEMENTATION
 #include <tinylib.h>
 
 #include <FreetypeFont.h>
 KankerApp* app_ptr = NULL;
-
 
 /* ------------------------------------------------------------------------------------ */
 

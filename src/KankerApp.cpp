@@ -4,6 +4,7 @@
 /* ------------------------------------------------------------------------------------ */
 
 static void on_add_characters_clicked(int id, void* user);
+static void on_font_test_clicked(int id, void* user);
 static void on_save_clicked(int id, void* user);
 static void on_file_selected(int selectid, int optionid, void* user);
 static void on_load_clicked(int id, void* user);
@@ -62,6 +63,7 @@ int KankerApp::init() {
 
   gui_home = new Container(new RenderGL());
   gui_home->add(new Button("Add characters",  0, GUI_ICON_FONT, on_add_characters_clicked, this,  GUI_CORNER_ALL | GUI_OUTLINE)).setPosition(painter.width() - 228, 31).setWidth(200);
+  gui_home->add(new Button("Test font",  0, GUI_ICON_FONT, on_font_test_clicked, this,  GUI_CORNER_ALL | GUI_OUTLINE)).setPosition(painter.width() - 228, 60).setWidth(200);
   gui_home->add(new Text("Filename", font_filename, 135)).setPosition(painter.width() - 227, painter.height() - 105).setWidth(200);
   gui_home->add(new Button("Save",  0, GUI_ICON_FLOPPY_O, on_save_clicked, this,  GUI_CORNER_ALL | GUI_OUTLINE)).setPosition(painter.width() - 228, painter.height() - 80).setWidth(200);
 
@@ -72,6 +74,15 @@ int KankerApp::init() {
     gui_home->add(sel).setPosition(painter.width() - 228, painter.height() - 200).setWidth(200);
     gui_home->add(new Button("Load",  0, GUI_ICON_FOLDER_OPEN, on_load_clicked, this,  GUI_CORNER_ALL | GUI_OUTLINE)).setPosition(painter.width() - 228, painter.height() - 175).setWidth(200);
   }
+
+  gui_abb = new rx::Group("Abb", new rx::RenderGL());
+  gui_abb->add(new Slider<float>("ABB.offset_x", kanker_abb.offset_x, -300, 300, 1));
+  gui_abb->add(new Slider<float>("ABB.offset_y", kanker_abb.offset_y, -300, 300, 1));
+  gui_abb->add(new Slider<float>("ABB.char_scale", kanker_abb.char_scale, 0, 300, 1));
+  gui_abb->add(new Slider<float>("ABB.line_height", kanker_abb.line_height, 0, 300, 1));
+  gui_abb->add(new Slider<float>("ABB.word_spacing", kanker_abb.word_spacing, 0, 300, 1));
+  gui_abb->add(new Slider<float>("ABB.range_width (mm)", kanker_abb.range_width, 0, 1500, 1));
+  gui_abb->add(new Slider<float>("ABB.range_height (mm)", kanker_abb.range_height, 0, 1500, 1));
 
   /* init the drawer. */
   if (0 != tiny_drawer.init(1024, 768, painter.width(), painter.height())) {
@@ -91,6 +102,10 @@ int KankerApp::init() {
   if (0 != kanker_font.load(test_font)) {
     RX_ERROR("Cannot load: %s", test_font.c_str());
   }
+
+  /* Init the ABB interface. */
+  kanker_abb.range_width = 500;
+  kanker_abb.range_height = 500;
 
   return 0;
 }
@@ -112,38 +127,7 @@ int KankerApp::getFontFiles(std::vector<std::string>& files) {
 }
 
 void KankerApp::draw() {
-  
-#if 1
-  if (0 != kanker_font.size()) {
-    KankerAbb abb;
-    abb.init(500, 500); /* 500mm x 500mm area. */
-    std::string str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
-    str = "diederick";
-    //str = "mmmnnoo";
-    std::vector<KankerAbbGlyph> result;
-    abb.write(kanker_font, str, result);
-
-    float offsetX = 100.0;
-    float offsetY = 100.0;
-
-    painter.clear();
-    for (size_t i = 0; i < result.size(); ++i) {
-      KankerAbbGlyph& glyph = result[i];
-      for (size_t i = 0; i < glyph.segments.size(); ++i) {
-        std::vector<vec3>& points = glyph.segments[i];
-        for (size_t j = 0; j < points.size() - 1; ++j) {
-          vec3& a = points[j];
-          vec3& b = points[j + 1];
-          painter.line(a.x + offsetX, a.y + offsetY, b.x + offsetX, b.y + offsetY);
-        }
-      }
-      painter.draw();
-    }
-
-  }
-  return;
-#endif
-
+ 
 #if 0
   /* generate a string. */
   std::vector<std::vector<vec3> > v;
@@ -172,6 +156,7 @@ void KankerApp::draw() {
     case KSTATE_CHAR_EDIT:          { drawStateCharEdit();         break;    }
     case KSTATE_CHAR_PREVIEW:       { drawStateCharPreview();      break;    }
     case KSTATE_CHAR_OVERVIEW:      { drawStateCharOverview();     break;    }
+    case KSTATE_FONT_TEST:          { drawStateFontTest();         break;    } 
     default: {
       RX_ERROR("error: invalid state: %d", state);
       break;
@@ -180,6 +165,42 @@ void KankerApp::draw() {
 }
 
 void KankerApp::drawStateHome() {
+  drawGui();
+}
+
+void KankerApp::drawStateFontTest() {
+
+#if 1
+  if (0 != kanker_font.size()) {
+    static bool save_file = true;
+
+    std::string str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
+    std::vector<KankerAbbGlyph> result;
+    kanker_abb.write(kanker_font, str, result);
+    
+    if (save_file) {
+      kanker_abb.save(rx_to_data_path("generated.txt"), result);
+      save_file = false;
+    }
+      
+    painter.clear();
+    for (size_t i = 0; i < result.size(); ++i) {
+      KankerAbbGlyph& glyph = result[i];
+      for (size_t i = 0; i < glyph.segments.size(); ++i) {
+        std::vector<vec3>& points = glyph.segments[i];
+        for (size_t j = 0; j < points.size() - 1; ++j) {
+          vec3& a = points[j];
+          vec3& b = points[j + 1];
+          painter.line(a.x, a.y, b.x, b.y);
+        }
+      }
+      painter.draw();
+    }
+  }
+
+#endif
+
+  gui_abb->draw();
   drawGui();
 }
 
@@ -410,6 +431,10 @@ void KankerApp::onChar(unsigned int key) {
       switchState(KSTATE_CHAR_INPUT_DRAWING);
       break;
     }
+    case KSTATE_FONT_TEST: {
+      gui_abb->onCharPress(key);
+      break;
+    }
     default: {
       break;
     }
@@ -419,6 +444,15 @@ void KankerApp::onChar(unsigned int key) {
 void KankerApp::onKeyRelease(int key, int scancode, int mods) {
 
   gui_home->onKeyRelease(key, mods);
+
+  if (key == GLFW_KEY_SPACE) {
+    RX_VERBOSE("TEST UPLOAD");
+    std::string filepath = rx_to_data_path("fonts/roxlu.xml");
+
+    Ftp ftp;
+    ftp.upload("ftp://username:password@domain.host.com", filepath);
+    ftp.download("ftp://username:password@domain.host.com", rx_to_data_path("state.xml"));
+  }
 
   switch (state) {
     case KSTATE_CHAR_INPUT_DRAWING: {
@@ -464,6 +498,10 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
       } /* 0 != kanker_font.glyphs.size() */
       break;
     }
+    case KSTATE_FONT_TEST: {
+      gui_abb->onKeyRelease(key, mods);
+      break;
+    }
     default: {
       break;
     }
@@ -471,7 +509,18 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
 }
 
 void KankerApp::onKeyPress(int key, int scancode, int mods) {
+
   gui_home->onKeyPress(key, mods);
+
+  switch (state) {
+    case KSTATE_FONT_TEST: {
+      gui_abb->onKeyPress(key, mods);
+      break;
+    }
+    default: {
+      break;
+    }
+  }
 }
 
 void KankerApp::onResize(int w, int h) {
@@ -520,6 +569,11 @@ void KankerApp::onMouseMove(double x, double y) {
       }
       break;
     }
+    case KSTATE_FONT_TEST: {
+      gui_abb->onMouseMove(x, y);
+      break;
+    }
+
     default: { 
       break;
     }
@@ -552,6 +606,10 @@ void KankerApp::onMousePress(double x, double y, int bt, int mods) {
 
       break;
     }
+    case KSTATE_FONT_TEST: {
+      gui_abb->onMousePress(x, y, bt, mods);
+      break;
+    }
     default: { 
       break;
     }
@@ -561,7 +619,6 @@ void KankerApp::onMousePress(double x, double y, int bt, int mods) {
 void KankerApp::onMouseRelease(double x, double y, int bt, int mods) {
 
   is_mouse_pressed = false;
-  
 
   gui_home->onMouseRelease(x, y, bt, mods);
 
@@ -585,6 +642,10 @@ void KankerApp::onMouseRelease(double x, double y, int bt, int mods) {
       }
       break;
     }
+    case KSTATE_FONT_TEST: {
+      gui_abb->onMouseRelease(x, y, bt, mods);
+      break;
+    }
     default: { 
       break;
     }
@@ -603,6 +664,18 @@ static void on_add_characters_clicked(int id, void* user) {
 
   app->switchState(KSTATE_CHAR_INPUT_TITLE);
 }
+
+static void on_font_test_clicked(int id, void* user) {
+
+  KankerApp* app = static_cast<KankerApp*>(user);
+  if (NULL == app) {
+    RX_ERROR("error: cannot cast to KankerApp*.");
+    return;
+  }
+
+  app->switchState(KSTATE_FONT_TEST);
+}
+
 
 static void on_save_clicked(int id, void* user) {
 

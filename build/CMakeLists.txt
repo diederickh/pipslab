@@ -15,6 +15,7 @@ set(lib_sources
   ${sd}/Blur.cpp
   ${sd}/BlurFBO.cpp
   ${sd}/FBO.cpp
+  ${sd}/Ftp.cpp
   ${sd}/KankerApp.cpp
   ${sd}/KankerAbb.cpp
   ${sd}/KankerFont.cpp
@@ -31,12 +32,14 @@ if (APPLE)
   find_library(fr_corevideo CoreVideo)
   find_library(fr_coremedia CoreMedia)
 
+
   set(app_libs
     ${EXTERN_LIB_DIR}/libglfw3.a
     ${EXTERN_LIB_DIR}/libremoxly.a
     ${EXTERN_LIB_DIR}/libpng.a
     ${EXTERN_LIB_DIR}/libz.a
     ${EXTERN_LIB_DIR}/libfreetype.a
+    ${EXTERN_LIB_DIR}/libcurl.a
     ${fr_corefoundation}
     ${fr_avfoundation}
     ${fr_cocoa}
@@ -46,6 +49,9 @@ if (APPLE)
     ${fr_coremedia}
     -lz
     -lbz2
+    -lldap
+    -lssl
+    -lcrypto
     )
 elseif(WIN32)
   set(app_libs

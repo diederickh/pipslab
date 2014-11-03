@@ -24,6 +24,7 @@ class KankerFont {
   void clear();                                                          /* Removes all added glyphs. */
   size_t size();                                                         /* Returns the number of elements in the glyphs member. */
   void write(std::string str, std::vector<std::vector<vec3> >& lines);   /* Fill the `lines` argument with the points with the correct positions to write the string. */
+  int getBaseHeight(float& height);                                      /* Sets the 'x-height', so the x, u, v, w or z characters must be added. Is used to normalize the characters. Returns 0 on success else < 0*/
 
  public:
   std::vector<KankerGlyph*> glyphs;                                      /* KankerFont is owner of the glyphs and it will free allocated memory. */

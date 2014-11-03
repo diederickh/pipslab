@@ -63,8 +63,7 @@ void KankerGlyph::normalizeAndCentralize() {
 
 void KankerGlyph::normalize() {
 
-  /*
-  // OLD - this will fit the character in a 1x1 box. 
+  /* this will fit the character in a 1x1 box.  */
   float inv_width = 1.0f / width;
   float inv_height = 1.0f / height;
   float inv = inv_width;
@@ -73,7 +72,6 @@ void KankerGlyph::normalize() {
     inv = inv_height;
   }
   inv = inv_height;
-  */
 
 #if 0
   /* we can't use the full height because of ascenders/descenders ! */
@@ -82,9 +80,37 @@ void KankerGlyph::normalize() {
     sh = 100;
   }
   float inv = 1.0 / sh;
-#else
+#endif
+
+#if 0
   float inv = 1.0f / height;
 #endif
+
+  for (size_t i = 0; i < segments.size(); ++i) {
+    std::vector<vec3>& points = segments[i];
+    for (size_t j = 0; j < points.size(); ++j) {
+      points[j].x *= inv;     
+      points[j].y *= -inv;  /* we need to flip ! */
+    }
+  }
+
+  width *= inv;
+  height *= inv;
+  min_x *= inv;
+  max_x *= inv;
+  min_y *= inv;
+  max_y *= inv;
+  advance_x *= inv;
+}
+
+void KankerGlyph::normalize(float xHeight) {
+
+  if (xHeight <= 0.0) {
+    RX_ERROR("Trying to normalize with xheight, but the xheight <= %f", xHeight);
+    return;
+  }
+  
+  float inv = 1.0f / xHeight;
 
   for (size_t i = 0; i < segments.size(); ++i) {
     std::vector<vec3>& points = segments[i];
@@ -205,8 +231,8 @@ void KankerGlyph::alignLeft() {
 }
 
 void KankerGlyph::alignBottom() {
-  
- for (size_t i = 0; i < segments.size(); ++i) {
+
+  for (size_t i = 0; i < segments.size(); ++i) {
     std::vector<vec3>& points = segments[i];
     for (size_t j = 0; j < points.size(); ++j) {
       vec3& point = points[j];
@@ -214,9 +240,8 @@ void KankerGlyph::alignBottom() {
     }
   }
 
- min_y = 0;
- max_y -= min_y;
-
+  min_y = 0;
+  max_y -= min_y;
 }
 
 

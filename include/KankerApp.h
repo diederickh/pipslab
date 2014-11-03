@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <Ftp.h>
 #include <FreetypeFont.h>
 #include <KankerFont.h>
 #include <KankerGlyph.h>
@@ -18,6 +19,7 @@
 #define ROXLU_USE_OPENGL
 #define ROXLU_USE_PNG
 #define ROXLU_USE_LOG
+#define ROXLU_USE_CURL
 #include <glad/glad.h>
 #include <tinylib.h>
 
@@ -30,7 +32,8 @@ enum {
   KSTATE_CHAR_INPUT_DRAWING,                                                   /* User can draw the strokes */
   KSTATE_CHAR_EDIT,                                                            /* Change the baseline, advance-x etc.. */
   KSTATE_CHAR_PREVIEW,                                                         /* Preview the current character. */
-  KSTATE_CHAR_OVERVIEW                                                         /* Shows all glyphs */
+  KSTATE_CHAR_OVERVIEW,                                                        /* Shows all glyphs */
+  KSTATE_FONT_TEST,                                                            /* Uses the current font to check if it works with the ABB. */ 
 };
 
 class KankerApp {
@@ -61,6 +64,7 @@ class KankerApp {
   void drawStateCharEdit();
   void drawStateCharOverview();                                                 /* Allows the user to select a glyph to edit. */
   void drawStateCharPreview();                                                  /* Draw a preview. */ 
+  void drawStateFontTest();
 
   /* Helpers. */
   void drawHelperLines();
@@ -74,10 +78,13 @@ class KankerApp {
   Painter painter;                                                              /* Used when drawing the captured input. */
   KankerFont kanker_font;                                                       /* The font we're adding glyphs to. */
   KankerGlyph* kanker_glyph;                                                    /* The current glyph to which points are added */
+  KankerAbb kanker_abb;                                                         /* The ABB interface. */
   KankerDrawer tiny_drawer;                                                     /* Used to draw the glyphs in a more interesting way. */
   KankerDrawer preview_drawer;                                                  /* Used to draw the preview of the character. */
+
   bool is_mouse_pressed;                                                        /* Is set to true when the user pressed the mouse */
   Container* gui_home;                                                          /* The gui container. */
+  Group* gui_abb;
   int gui_width;                                                                /* The width of the gui, used to position some graphical elements */ 
   std::string font_filename;                                                    /* The last set or loaded file name. */
   int selected_font_dx;                                                         /* Used when loading a font. */

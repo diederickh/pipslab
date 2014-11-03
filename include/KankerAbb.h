@@ -43,11 +43,13 @@ class KankerAbb {
  public:
   KankerAbb();
   ~KankerAbb();
-  int init(float rangeW, float rangeH);
   int write(KankerFont& font, std::string str, std::vector<KankerAbbGlyph>& out);
+  int save(std::string filepath, std::vector<KankerAbbGlyph>& message);
   float getWidth(KankerFont& font, std::string word);
 
  public:
+  float offset_x;       /* used to position all glyphs with a offset. */
+  float offset_y;       /* used to position all glyphs with a offset. */
   float range_width;    /* range in milimeters */
   float range_height;   /* range in milimeters */
   float char_scale;     /* how to scale the characters. */

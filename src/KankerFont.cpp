@@ -260,3 +260,18 @@ int KankerFont::load(std::string filepath) {
   return 0;
 }
 
+int KankerFont::getBaseHeight(float& height) {
+
+  std::string chars = "xuvwz";
+  for (size_t i = 0; i < chars.size(); ++i) {
+    KankerGlyph* g = getGlyphByCharCode(chars[i]);
+    if (NULL == g) {
+      continue;
+    }
+    height = g->height;
+    return 0;
+  }
+
+  return -1;
+}
+

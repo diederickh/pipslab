@@ -26,6 +26,7 @@ class KankerGlyph {
 
   void centralize();                                  /* Centralizes the vertices. */
   void normalize();                                   /* Normalizes the points of all segments. */ 
+  void normalize(float xHeight);                      /* Normalize using the given x-height. */
   void normalizeAndCentralize();                      /* The order in which we normalize/centralize is important; this function will make sure that the glyph is correctly positioned at 0,0 and can be displayed with e.g. openGL. */
   void translate(float x, float y);                   /* Translate all points by the given x and y. This will actually change the point values.*/
   void scale(float s);                                /* Scale all points + members */
