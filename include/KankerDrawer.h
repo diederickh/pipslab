@@ -59,6 +59,31 @@ static const char* KANKER_FS = ""
   "}"
   "";
 
+static const char* KANKER_LINE_VS = ""
+  "#version 330\n"
+  ""
+  "uniform mat4 u_pm;"
+  "uniform mat4 u_vm;"
+  ""
+  "layout ( location = 0 ) in vec4 a_pos; "
+  ""
+  "void main() { "
+  "  vec4 pos = a_pos;"
+  "  gl_Position = u_pm *  pos; "
+  "}"
+  "";
+
+
+static const char* KANKER_LINE_FS = ""
+  "#version 330\n"
+  ""
+  "layout ( location = 0 ) out vec4 fragcolor;"
+  ""
+  "void main() {"
+  "  fragcolor = vec4(1.0, 0.0, 0.0, 1.0);"
+  "}"
+  "";
+
 static const char* KANKER_MIX_FS = ""
   "#version 330\n"
   ""
@@ -83,12 +108,14 @@ class KankerDrawer {
   KankerDrawer();
   ~KankerDrawer();
   int init(int rttWidth, int rttHeight, int winWidth, int winHeight);
-  int updateVertices(KankerGlyph glyph);                                /* call this when you want to draw a single glyph. */
-  //int updateVertices(std::vector<std::vector<KankerVertex> >& data);     /* call this when you want to set the vertices we draw yourself. Each std::vector<KankerVertex> defines a line segment. */
+  int updateVertices(KankerGlyph glyph);                                 /* call this when you want to draw a single glyph. */
+  int updateVertices(std::vector<std::vector<vec3> >& lines);
   void update();
   void renderToTexture();                                                /* renders the glyph to a texture, that is drawn in draw(). */
   void draw(int x = 0, int y = 0);
+  void drawLines();
   void renderAndDraw(int x, int y);
+  void uploadVertices();                                                 /* uploads the vertices to GPU. */
 
  public:
   GLuint geom_vbo;
@@ -101,6 +128,9 @@ class KankerDrawer {
   GLuint mix_vert;
   GLuint mix_frag;
   GLuint mix_prog;
+  GLuint line_vert;
+  GLuint line_frag;                                          /* Used to draw the vertices as lines. */
+  GLuint line_prog;                                          /* Program that draws the vertices as lines. */
   GLint u_pm;
   GLint u_mm;
   GLint u_vm;

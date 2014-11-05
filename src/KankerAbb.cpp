@@ -28,8 +28,11 @@ KankerAbb::KankerAbb()
 KankerAbb::~KankerAbb() {
 }
 
-int KankerAbb::write(KankerFont& font, std::string str, std::vector<KankerAbbGlyph>& result) {
-
+int KankerAbb::write(KankerFont& font, 
+                     std::string str,
+                     std::vector<KankerAbbGlyph>& result,
+                     std::vector<std::vector<vec3> >& segmentsOut)
+{
   std::stringstream ss;
   std::string word;
   bool has_newline = false;
@@ -97,6 +100,11 @@ int KankerAbb::write(KankerFont& font, std::string str, std::vector<KankerAbbGly
                 std::back_inserter(abb_glyph.segments));
 
       result.push_back(abb_glyph);
+
+     std::copy(abb_glyph.glyph.segments.begin(),
+                abb_glyph.glyph.segments.end(), 
+                std::back_inserter(segmentsOut));
+
 
       pen_x += abb_glyph.glyph.advance_x;
     }

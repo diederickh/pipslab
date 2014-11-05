@@ -15,6 +15,9 @@ KankerDrawer::KankerDrawer()
   ,mix_vert(0)
   ,mix_frag(0)
   ,mix_prog(0)
+  ,line_vert(0)
+  ,line_frag(0)
+  ,line_prog(0)
   ,u_pm(-1)
   ,u_mm(-1)
   ,u_vm(-1)
@@ -116,6 +119,16 @@ int KankerDrawer::init(int rttWidth, int rttHeight, int winWidth, int winHeight)
   glUseProgram(mix_prog);
   glUniform1i(glGetUniformLocation(mix_prog, "u_blur_tex"), 0);
   glUniform1i(glGetUniformLocation(mix_prog, "u_scene_tex"), 1);
+
+  /* setup the line drawer. */
+  line_vert = rx_create_shader(GL_VERTEX_SHADER, KANKER_LINE_VS);
+  line_frag = rx_create_shader(GL_FRAGMENT_SHADER, KANKER_LINE_FS);
+  line_prog = rx_create_program(line_vert, line_frag, true);
+  glUseProgram(line_prog);
+
+  mat4 ortho;
+  ortho.ortho(0, win_width, win_height, 0, 0.0f, 100.0f);
+  glUniformMatrix4fv(glGetUniformLocation(line_prog, "u_pm"), 1, GL_FALSE, ortho.ptr());
   return 0;
 }
 
@@ -181,6 +194,61 @@ void KankerDrawer::draw(int x, int y) {
   glViewport(0, 0, win_width, win_height);
 }
 
+void KankerDrawer::drawLines() {
+  glViewport(0, 0, win_width, win_height);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindVertexArray(geom_vao);
+  glUseProgram(line_prog);
+  glMultiDrawArrays(GL_LINE_STRIP, &offsets[0], &counts[0], counts.size());
+}
+
+void KankerDrawer::uploadVertices() {
+
+  if (0 == vertices.size()) {
+    RX_ERROR("error: no vertices found in KankerDrawer (?).");
+    return;
+  }
+
+  glBindVertexArray(geom_vao);
+  glBindBuffer(GL_ARRAY_BUFFER, geom_vbo);
+  
+  size_t needed = sizeof(KankerVertex) * vertices.size();
+  if (needed > capacity) {
+    glBufferData(GL_ARRAY_BUFFER, needed, vertices[0].ptr(), GL_STREAM_DRAW);
+    capacity = needed;
+  }
+  else {
+    glBufferSubData(GL_ARRAY_BUFFER, 0, needed, vertices[0].ptr());
+  }
+}
+
+int KankerDrawer::updateVertices(std::vector<std::vector<vec3> >& lines) {
+
+  if (0 == lines.size()) {
+    RX_ERROR("No lines found in the given lines vector.");
+    return -1;
+  }
+
+  vertices.clear();
+  offsets.clear();
+  counts.clear();
+
+  for (size_t i = 0; i < lines.size(); ++i) {
+    offsets.push_back(vertices.size());
+    std::vector<vec3>& points = lines[i];
+    for (size_t j = 0; j < points.size(); ++j) {
+      KankerVertex v;
+      v.pos = points[j];
+      vertices.push_back(v);
+    }
+    counts.push_back(vertices.size() - offsets.back());
+  }
+
+  uploadVertices();
+  
+  return 0;
+}
+
 int KankerDrawer::updateVertices(KankerGlyph glyph) {
 
   if (0 == glyph.segments.size()) {
@@ -232,6 +300,9 @@ int KankerDrawer::updateVertices(KankerGlyph glyph) {
     counts.push_back(vertices.size() - offsets.back());
   }
 
+  uploadVertices();
+
+  /*
   if (0 == vertices.size()) {
     RX_ERROR("error: no vertices found in KankerDrawer (?).");
     return -3;
@@ -248,6 +319,7 @@ int KankerDrawer::updateVertices(KankerGlyph glyph) {
   else {
     glBufferSubData(GL_ARRAY_BUFFER, 0, needed, vertices[0].ptr());
   }
+  */
 
   return 0;
 }

@@ -43,7 +43,12 @@ class KankerAbb {
  public:
   KankerAbb();
   ~KankerAbb();
-  int write(KankerFont& font, std::string str, std::vector<KankerAbbGlyph>& out);
+
+  int write(KankerFont& font,
+            std::string str, 
+            std::vector<KankerAbbGlyph>& out, 
+            std::vector<std::vector<vec3> >& segmentsOut);
+
   int save(std::string filepath, std::vector<KankerAbbGlyph>& message);
   float getWidth(KankerFont& font, std::string word);
 

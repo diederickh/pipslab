@@ -29,8 +29,16 @@ KankerApp::KankerApp()
 }
 
 KankerApp::~KankerApp() {
-  delete gui_home;
-  gui_home = NULL;
+
+  if (gui_home) {
+    delete gui_home;
+    gui_home = NULL;
+  }
+
+  if (gui_abb) {
+    delete gui_abb;
+    gui_abb = NULL;
+  }
 }
 
 int KankerApp::init() {
@@ -83,6 +91,7 @@ int KankerApp::init() {
   gui_abb->add(new Slider<float>("ABB.word_spacing", kanker_abb.word_spacing, 0, 300, 1));
   gui_abb->add(new Slider<float>("ABB.range_width (mm)", kanker_abb.range_width, 0, 1500, 1));
   gui_abb->add(new Slider<float>("ABB.range_height (mm)", kanker_abb.range_height, 0, 1500, 1));
+  gui_abb->setPosition(600, 10);
 
   /* init the drawer. */
   if (0 != tiny_drawer.init(1024, 768, painter.width(), painter.height())) {
@@ -170,35 +179,21 @@ void KankerApp::drawStateHome() {
 
 void KankerApp::drawStateFontTest() {
 
-#if 1
   if (0 != kanker_font.size()) {
     static bool save_file = true;
 
     std::string str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
     std::vector<KankerAbbGlyph> result;
-    kanker_abb.write(kanker_font, str, result);
-    
+    std::vector<std::vector<vec3> > points;
+    kanker_abb.write(kanker_font, str, result, points);
+
     if (save_file) {
       kanker_abb.save(rx_to_data_path("generated.txt"), result);
       save_file = false;
     }
-      
-    painter.clear();
-    for (size_t i = 0; i < result.size(); ++i) {
-      KankerAbbGlyph& glyph = result[i];
-      for (size_t i = 0; i < glyph.segments.size(); ++i) {
-        std::vector<vec3>& points = glyph.segments[i];
-        for (size_t j = 0; j < points.size() - 1; ++j) {
-          vec3& a = points[j];
-          vec3& b = points[j + 1];
-          painter.line(a.x, a.y, b.x, b.y);
-        }
-      }
-      painter.draw();
-    }
+    preview_drawer.updateVertices(points);
+    preview_drawer.drawLines();
   }
-
-#endif
 
   gui_abb->draw();
   drawGui();
@@ -445,6 +440,7 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
 
   gui_home->onKeyRelease(key, mods);
 
+#if 0 
   if (key == GLFW_KEY_SPACE) {
     RX_VERBOSE("TEST UPLOAD");
     std::string filepath = rx_to_data_path("fonts/roxlu.xml");
@@ -453,6 +449,7 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
     ftp.upload("ftp://username:password@domain.host.com", filepath);
     ftp.download("ftp://username:password@domain.host.com", rx_to_data_path("state.xml"));
   }
+#endif
 
   switch (state) {
     case KSTATE_CHAR_INPUT_DRAWING: {
