@@ -1,6 +1,6 @@
 #!/bin/bash
 
-architecture="i386"
+# architecture="i386"  # is defined in release_x86.sh
 
 build_m4=n
 build_autoconf=y        # needs an updated m4 

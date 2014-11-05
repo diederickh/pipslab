@@ -6,8 +6,8 @@ extern_dir=""
 is_mac=n
 is_linux=n
 is_win=n
-architecture="i386"
-architecture="x86_64"
+export architecture="i386"
+#export architecture="x86_64"
 
 if [ ! -d build.release ] ; then 
     mkdir build.release
@@ -34,7 +34,7 @@ if [ ! -d ${d}/dependencies ] ; then
 fi
 
 # Check if extern dir is created and if not, compile dependencies.
-if [  -d ${extern_path} ] ; then
+if [ ! -d ${extern_path} ] ; then
     if [ "${is_linux}" = "y" ] ; then
         ./dependencies/build_unix_dependencies.sh
     elif [ "${is_mac}" = "y" ] ; then
