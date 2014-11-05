@@ -18,9 +18,11 @@ set(lib_sources
   ${sd}/Ftp.cpp
   ${sd}/KankerApp.cpp
   ${sd}/KankerAbb.cpp
+  ${sd}/KankerAbbController.cpp
   ${sd}/KankerFont.cpp
   ${sd}/KankerGlyph.cpp
   ${sd}/KankerDrawer.cpp
+
 )
 
 if (APPLE) 

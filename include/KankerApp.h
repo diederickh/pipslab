@@ -11,6 +11,7 @@
 #include <KankerGlyph.h>
 #include <KankerDrawer.h>
 #include <KankerAbb.h>
+#include <KankerAbbController.h>
 
 #define REMOXLY_USE_OPENGL
 #include <gui/Remoxly.h>
@@ -81,6 +82,8 @@ class KankerApp {
   KankerAbb kanker_abb;                                                         /* The ABB interface. */
   KankerDrawer tiny_drawer;                                                     /* Used to draw the glyphs in a more interesting way. */
   KankerDrawer preview_drawer;                                                  /* Used to draw the preview of the character. */
+  KankerAbbController controller;                                               /* Used to test the controller. */
+  std::string test_message;                                                     /* Text that we use to upload to the ABB. */
 
   bool is_mouse_pressed;                                                        /* Is set to true when the user pressed the mouse */
   Container* gui_home;                                                          /* The gui container. */

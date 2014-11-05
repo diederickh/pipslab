@@ -1,6 +1,7 @@
-#include <sstream>
 #include <KankerAbb.h>
 
+/* ---------------------------------------------------------------------- */
+template <class T> int read_xml(xml_node<>* node, std::string name, T defaultval, T& result);
 /* ---------------------------------------------------------------------- */
 
 KankerAbbGlyph::KankerAbbGlyph() 
@@ -62,7 +63,7 @@ int KankerAbb::write(KankerFont& font,
   while (ss >> word) {
 
     /* Does this word fit on the current line? */
-    word_width = getWidth(font, word);
+    word_width = getWordWidth(font, word);
     float left = width_available - word_width;
 
     if (left > 0) {
@@ -74,9 +75,6 @@ int KankerAbb::write(KankerFont& font,
       pen_y += line_height;
       width_available = range_width - word_width;
     }
-
-    //        printf("%s, left: %f, word_width: %f, word_spacing: %f, available: %f\n", 
-    //   word.c_str(), left, word_width, word_spacing, width_available);    
 
     /* Generate vertices for this word. */
     for (size_t i = 0; i < word.size(); ++i) {
@@ -130,12 +128,10 @@ int KankerAbb::write(KankerFont& font,
     }
   }
 
-
-  //  printf("---\n");
   return 0;
 }
 
-int KankerAbb::save(std::string filepath, std::vector<KankerAbbGlyph>& message) {
+int KankerAbb::saveAbbModule(std::string filepath, std::vector<KankerAbbGlyph>& message) {
 
   if (0 == filepath.size()) {
     RX_ERROR("Cannot save, invalid filepath.");
@@ -218,7 +214,7 @@ int KankerAbb::save(std::string filepath, std::vector<KankerAbbGlyph>& message) 
   return 0;
 }
 
-float KankerAbb::getWidth(KankerFont& font, std::string word) {
+float KankerAbb::getWordWidth(KankerFont& font, std::string word) {
 
   float width = 0.0f;
   float x_height = 0.0f;
@@ -255,3 +251,118 @@ float KankerAbb::getWidth(KankerFont& font, std::string word) {
   return width;
 }
 
+int KankerAbb::saveSettings(std::string filepath) {
+
+  if (0 == filepath.size()) {
+    RX_ERROR("Invalid filepath (empty).");
+    return -1;
+  }
+
+  std::ofstream ofs(filepath.c_str(), std::ios::out);
+  if (!ofs.is_open()) {
+    RX_ERROR("Failed to open: %s", filepath.c_str());
+    return -2;
+  }
+  
+  ofs << "<config>" << std::endl
+     << "  <offset_x>" << offset_x << "</offset_x>" << std::endl
+     << "  <offset_y>" << offset_y << "</offset_y>" << std::endl 
+     << "  <range_width>" << range_width << "</range_width>" << std::endl
+     << "  <range_height>" << range_height << "</range_height>" << std::endl
+     << "  <char_scale>" << char_scale << "</char_scale>" << std::endl
+     << "  <word_spacing>" << word_spacing << "</word_spacing>" << std::endl
+     << "  <line_height>" << line_height << "</line_height>" << std::endl
+     << "  <ftp_url>" << ftp_url << "</ftp_url>" << std::endl
+     << "</config>";
+
+  ofs.close();
+  
+  return 0;
+}
+
+int KankerAbb::loadSettings(std::string filepath) {
+  
+  if (!rx_file_exists(filepath)) {
+    RX_ERROR("Cannot find %s", filepath.c_str());
+    return -1;
+  }
+
+  std::ifstream ifs(filepath.c_str(), std::ios::in);
+  if(!ifs.is_open()) {
+    RX_ERROR("Cannot open the settings file.");
+    return -2;
+  }
+ 
+  std::string xml_str;
+  xml_str.assign(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
+
+  if (0 == xml_str.size()) {
+    RX_ERROR("Settings file is empty.");
+    return -3;
+  }
+
+  xml_document<> doc;
+
+  try {
+
+    doc.parse<0>((char*)xml_str.c_str());
+    
+    xml_node<>* cfg = doc.first_node("config");
+    read_xml<float>(cfg, "offset_x", 0, offset_x);
+    read_xml<float>(cfg, "offset_y", 0, offset_y);
+    read_xml<float>(cfg, "range_width", 500, range_width);
+    read_xml<float>(cfg, "range_height", 500, range_height);
+    read_xml<float>(cfg, "char_scale", 15.0f, char_scale);
+    read_xml<float>(cfg, "word_spacing", 40.0f, word_spacing);
+    read_xml<float>(cfg, "line_height", 35.0f, line_height);
+    read_xml<std::string>(cfg, "ftp_url", "", ftp_url);
+
+    print();
+  }
+  catch (...) {
+    RX_ERROR("Caught xml exception.");
+    return -4;
+  }
+  return 0;
+}
+
+void KankerAbb::print() {
+
+  RX_VERBOSE("abb.offset_x: %f", offset_x);
+  RX_VERBOSE("abb.offset_y: %f", offset_y);
+  RX_VERBOSE("abb.range_width: %f", range_width);
+  RX_VERBOSE("abb.range_height: %f", range_height);
+  RX_VERBOSE("abb.char_scale: %f", char_scale);
+  RX_VERBOSE("abb.word_spacing: %f", word_spacing);
+  RX_VERBOSE("abb.line_height: %f", line_height);
+  RX_VERBOSE("abb.ftp_url: %s", ftp_url.c_str());
+}
+
+/* ---------------------------------------------------------------------- */
+
+template <class T> int read_xml(xml_node<>* node, std::string name, T defaultval, T& result) {
+
+  result = defaultval;
+
+  if (0 == name.size()) {
+    RX_ERROR("name.size() == 0.");
+    return -1;
+  }
+
+  if (NULL == node) {
+    RX_ERROR("Container node for %s is NULL.", name.c_str());
+    return -2;
+  }
+
+  xml_node<>* el = node->first_node(name.c_str());
+  if (NULL == el) {
+    RX_ERROR("%s not found in %s", name.c_str(), node->name());
+    return -3;
+  }
+
+  std::stringstream ss;
+  ss << el->value();
+  ss >> result;
+    
+  return 0;
+}

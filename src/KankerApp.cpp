@@ -8,6 +8,9 @@ static void on_font_test_clicked(int id, void* user);
 static void on_save_clicked(int id, void* user);
 static void on_file_selected(int selectid, int optionid, void* user);
 static void on_load_clicked(int id, void* user);
+static void on_abb_save_clicked(int id, void* user);
+static void on_abb_load_clicked(int id, void* user);
+static void on_abb_test_upload_clicked(int id, void* user);
 
 /* ------------------------------------------------------------------------------------ */
 
@@ -69,6 +72,7 @@ int KankerApp::init() {
 
   switchState(KSTATE_HOME);
 
+  /* Create the GUI. */
   gui_home = new Container(new RenderGL());
   gui_home->add(new Button("Add characters",  0, GUI_ICON_FONT, on_add_characters_clicked, this,  GUI_CORNER_ALL | GUI_OUTLINE)).setPosition(painter.width() - 228, 31).setWidth(200);
   gui_home->add(new Button("Test font",  0, GUI_ICON_FONT, on_font_test_clicked, this,  GUI_CORNER_ALL | GUI_OUTLINE)).setPosition(painter.width() - 228, 60).setWidth(200);
@@ -84,6 +88,7 @@ int KankerApp::init() {
   }
 
   gui_abb = new rx::Group("Abb", new rx::RenderGL());
+  gui_abb->setWidth(500);
   gui_abb->add(new Slider<float>("ABB.offset_x", kanker_abb.offset_x, -300, 300, 1));
   gui_abb->add(new Slider<float>("ABB.offset_y", kanker_abb.offset_y, -300, 300, 1));
   gui_abb->add(new Slider<float>("ABB.char_scale", kanker_abb.char_scale, 0, 300, 1));
@@ -91,7 +96,11 @@ int KankerApp::init() {
   gui_abb->add(new Slider<float>("ABB.word_spacing", kanker_abb.word_spacing, 0, 300, 1));
   gui_abb->add(new Slider<float>("ABB.range_width (mm)", kanker_abb.range_width, 0, 1500, 1));
   gui_abb->add(new Slider<float>("ABB.range_height (mm)", kanker_abb.range_height, 0, 1500, 1));
-  gui_abb->setPosition(600, 10);
+  gui_abb->add(new Text("ABB.ftp_url", kanker_abb.ftp_url, 400));
+  gui_abb->add(new Button("Save", 0, GUI_ICON_FLOPPY_O, on_abb_save_clicked, this));
+  gui_abb->add(new Button("Load", 0, GUI_ICON_REFRESH, on_abb_load_clicked, this));
+  gui_abb->add(new Button("Send to ABB", 0, GUI_ICON_UPLOAD, on_abb_test_upload_clicked, this));
+  gui_abb->setPosition(10, 500);
 
   /* init the drawer. */
   if (0 != tiny_drawer.init(1024, 768, painter.width(), painter.height())) {
@@ -116,6 +125,19 @@ int KankerApp::init() {
   kanker_abb.range_width = 500;
   kanker_abb.range_height = 500;
 
+  /* Setup the controller that we use to test the ABB communication */
+  KankerAbbControllerSettings cfg;
+  cfg.font_file = rx_to_data_path("fonts/roxlu.xml");
+  cfg.settings_file = rx_to_data_path("abb_settings.xml");
+  if (0 != controller.init(cfg)) {
+    RX_ERROR("Cannot initialize the controller.");
+  }
+
+  test_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
+
+  /* Force a load for the settings. */
+  on_abb_load_clicked(0, this);
+
   return 0;
 }
 
@@ -136,27 +158,6 @@ int KankerApp::getFontFiles(std::vector<std::string>& files) {
 }
 
 void KankerApp::draw() {
- 
-#if 0
-  /* generate a string. */
-  std::vector<std::vector<vec3> > v;
-  kanker_font.write("diederick", v);
-  if (0 != v.size()) {
-    float offsetX = -150.0;
-    float offsetY = 0.0;
-    painter.clear();
-    for (size_t i = 0; i < v.size(); ++i) {
-      std::vector<vec3>& points = v[i];
-      for (size_t j = 0; j < points.size() - 1; ++j) {
-        vec3& a = points[j];
-        vec3& b = points[j + 1];
-        painter.line(a.x + offsetX, a.y + offsetY, b.x + offsetX, b.y + offsetY);
-      }
-    }
-    painter.draw();
-    return;
-  }
-#endif
 
   switch (state) {
     case KSTATE_HOME:               { drawStateHome();             break;    }
@@ -180,17 +181,9 @@ void KankerApp::drawStateHome() {
 void KankerApp::drawStateFontTest() {
 
   if (0 != kanker_font.size()) {
-    static bool save_file = true;
-
-    std::string str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
     std::vector<KankerAbbGlyph> result;
     std::vector<std::vector<vec3> > points;
-    kanker_abb.write(kanker_font, str, result, points);
-
-    if (save_file) {
-      kanker_abb.save(rx_to_data_path("generated.txt"), result);
-      save_file = false;
-    }
+    kanker_abb.write(kanker_font, test_message, result, points);
     preview_drawer.updateVertices(points);
     preview_drawer.drawLines();
   }
@@ -736,11 +729,46 @@ static void on_load_clicked(int id, void* user) {
   app->font_filename = files[app->selected_font_dx];
 
   app->switchState(KSTATE_CHAR_OVERVIEW);
+}
 
+static void on_abb_save_clicked(int id, void* user) {
+
+  KankerApp* app = static_cast<KankerApp*>(user);
+  if (NULL == app) {
+    RX_ERROR("Failed to cast to KankerApp");
+    return;
+  }
+
+  if (0 != app->kanker_abb.saveSettings(rx_to_data_path("abb_settings.xml"))) {
+    RX_ERROR("Failed to save the settings.");
+  }
+}
+
+static void on_abb_load_clicked(int id, void* user) {
+
+  KankerApp* app = static_cast<KankerApp*>(user);
+  if (NULL == app) {
+    RX_ERROR("Failed to cast to KankerApp");
+    return;
+  }
+
+  if (0 != app->kanker_abb.loadSettings(rx_to_data_path("abb_settings.xml"))) {
+    RX_ERROR("Failed to load the settings.");
+  }
+}
+
+static void on_abb_test_upload_clicked(int id, void* user) {
+
+  KankerApp* app = static_cast<KankerApp*>(user);
+  if (NULL == app) {
+    RX_ERROR("Failed to cast to kankerApp");
+    return;
+  }
   
-
-  // std::vector<std::vector<KankerVertex> > vertices;
-  // app->kanker_font.generateVerticesForText("abc", vertices);
+  if (0 != app->controller.writeText(app->test_message)) {
+    RX_ERROR("Failed to write the text to the ABB.");
+    return;
+  }
 }
 
 /* ------------------------------------------------------------------------------------ */
