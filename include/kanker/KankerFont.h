@@ -1,7 +1,7 @@
 #ifndef KANKER_FONT_H
 #define KANKER_FONT_H
 
-#include <KankerGlyph.h>
+#include <kanker/KankerGlyph.h>
 #include <map>
 #include <vector>
 #include <fstream>

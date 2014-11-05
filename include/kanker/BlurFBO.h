@@ -26,8 +26,8 @@
 #define ROXLU_USE_MATH
 #include <tinylib.h>
 
-#include "Blur.h"
-#include "FBO.h"
+#include <kanker/Blur.h>
+#include <kanker/FBO.h>
 
 class BlurFBO {
 

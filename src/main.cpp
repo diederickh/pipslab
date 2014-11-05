@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <KankerApp.h> 
+#include <kanker/KankerApp.h> 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -26,7 +26,7 @@
 #define ROXLU_IMPLEMENTATION
 #include <tinylib.h>
 
-#include <FreetypeFont.h>
+#include <kanker/FreetypeFont.h>
 KankerApp* app_ptr = NULL;
 
 /* ------------------------------------------------------------------------------------ */
@@ -42,6 +42,8 @@ void resize_callback(GLFWwindow* window, int width, int height);
  
 int main() {
  
+  curl_global_init(CURL_GLOBAL_ALL);
+
   glfwSetErrorCallback(error_callback);
  
   if(!glfwInit()) {

@@ -1,4 +1,4 @@
-#include "BlurFBO.h"
+#include <kanker/BlurFBO.h>
 
 BlurFBO::BlurFBO() 
   :is_init(0)

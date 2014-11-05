@@ -1,4 +1,4 @@
-#include <KankerFont.h>
+#include <kanker/KankerFont.h>
 #include <iterator>
 #include <algorithm>
 #include <rapidxml.hpp>

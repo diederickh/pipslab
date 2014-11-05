@@ -1,5 +1,12 @@
 /*
 
+  Make sure to call the following function before using this class:
+
+    `curl_global_init(CURL_GLOBAL_ALL);`
+
+  and when you're ready call:
+
+     `curl_global_cleanup()`.
 
  */
 #ifndef ROXLU_FTP_H

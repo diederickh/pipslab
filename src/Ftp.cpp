@@ -1,6 +1,6 @@
 #define ROXLU_USE_LOG
 #include <tinylib.h>
-#include <Ftp.h>
+#include <kanker/Ftp.h>
 
 /* -------------------------------------------------------------------------------- */
 
@@ -32,11 +32,9 @@ FtpTask::~FtpTask() {
 /* -------------------------------------------------------------------------------- */
 
 Ftp::Ftp() {
-  curl_global_init(CURL_GLOBAL_ALL);
 }
 
 Ftp::~Ftp() {
-  curl_global_cleanup();
 }
 
 int Ftp::upload(std::string url, std::string filepath) {

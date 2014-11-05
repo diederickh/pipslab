@@ -1,4 +1,4 @@
-#include <KankerApp.h>
+#include <kanker/KankerApp.h>
 #include <GLFW/glfw3.h>
 
 /* ------------------------------------------------------------------------------------ */
@@ -129,9 +129,11 @@ int KankerApp::init() {
   KankerAbbControllerSettings cfg;
   cfg.font_file = rx_to_data_path("fonts/roxlu.xml");
   cfg.settings_file = rx_to_data_path("abb_settings.xml");
-  if (0 != controller.init(cfg)) {
+  if (0 != controller.init(cfg, this)) {
     RX_ERROR("Cannot initialize the controller.");
   }
+
+  controller.checkAbbState();
 
   test_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
 
@@ -249,7 +251,7 @@ void KankerApp::drawHelperLines() {
   y = painter.height() - (gui_width + 250);
   painter.line(0.0, y, painter.width(), y);
 
-#if 0
+#if 1
   /* descender line. */
   painter.hex("333333");
   y = painter.height() - (gui_width - 50);
@@ -272,8 +274,8 @@ void KankerApp::drawHelperLines() {
   painter.line(gui_width + 250, 0, gui_width + 250, painter.height());
 
   /* origin vertical line. */
-  //  painter.hex("333333");
-  //  painter.line(gui_width + 100, 0, gui_width + 100, painter.height());
+  painter.hex("333333");
+  painter.line(gui_width + 100, 0, gui_width + 100, painter.height());
 
   /* origin point. */
   painter.hex("5D098F");
@@ -405,6 +407,10 @@ void KankerApp::switchState(int newstate) {
   }
 }
 
+void KankerApp::onAbbStateChanged(int state, int64_t messageID) {
+  RX_VERBOSE("The ABB state changed to %d for message %lld", state, messageID);
+}
+
 void KankerApp::onChar(unsigned int key) {
 
   gui_home->onCharPress(key);
@@ -433,17 +439,6 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
 
   gui_home->onKeyRelease(key, mods);
 
-#if 0 
-  if (key == GLFW_KEY_SPACE) {
-    RX_VERBOSE("TEST UPLOAD");
-    std::string filepath = rx_to_data_path("fonts/roxlu.xml");
-
-    Ftp ftp;
-    ftp.upload("ftp://username:password@domain.host.com", filepath);
-    ftp.download("ftp://username:password@domain.host.com", rx_to_data_path("state.xml"));
-  }
-#endif
-
   switch (state) {
     case KSTATE_CHAR_INPUT_DRAWING: {
       if (GLFW_KEY_BACKSPACE == key) {
@@ -459,6 +454,12 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
     case KSTATE_CHAR_EDIT: {
       if (GLFW_KEY_SPACE == key) {
         switchState(KSTATE_CHAR_PREVIEW);
+      }
+      break;
+    }
+    case KSTATE_CHAR_PREVIEW: { 
+      if (GLFW_KEY_SPACE == key) {
+        switchState(KSTATE_CHAR_INPUT_TITLE);
       }
       break;
     }
@@ -488,6 +489,7 @@ void KankerApp::onKeyRelease(int key, int scancode, int mods) {
       } /* 0 != kanker_font.glyphs.size() */
       break;
     }
+      
     case KSTATE_FONT_TEST: {
       gui_abb->onKeyRelease(key, mods);
       break;
@@ -765,7 +767,7 @@ static void on_abb_test_upload_clicked(int id, void* user) {
     return;
   }
   
-  if (0 != app->controller.writeText(app->test_message)) {
+  if (0 != app->controller.writeText(1, app->test_message)) {
     RX_ERROR("Failed to write the text to the ABB.");
     return;
   }

@@ -5,13 +5,13 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <Ftp.h>
-#include <FreetypeFont.h>
-#include <KankerFont.h>
-#include <KankerGlyph.h>
-#include <KankerDrawer.h>
-#include <KankerAbb.h>
-#include <KankerAbbController.h>
+#include <kanker/Ftp.h>
+#include <kanker/FreetypeFont.h>
+#include <kanker/KankerFont.h>
+#include <kanker/KankerGlyph.h>
+#include <kanker/KankerDrawer.h>
+#include <kanker/KankerAbb.h>
+#include <kanker/KankerAbbController.h>
 
 #define REMOXLY_USE_OPENGL
 #include <gui/Remoxly.h>
@@ -37,7 +37,7 @@ enum {
   KSTATE_FONT_TEST,                                                            /* Uses the current font to check if it works with the ABB. */ 
 };
 
-class KankerApp {
+class KankerApp : public KankerAbbControllerListener {
 
  public:
   KankerApp();
@@ -56,6 +56,9 @@ class KankerApp {
   void onMouseMove(double x, double y);
   void onMousePress(double x, double y, int bt, int mods);
   void onMouseRelease(double x, double y, int bt, int mods);
+
+  /* Callback for the controller. */
+  void onAbbStateChanged(int state, int64_t messageID);
 
  private:
   void drawGui();

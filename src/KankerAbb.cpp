@@ -1,4 +1,4 @@
-#include <KankerAbb.h>
+#include <kanker/KankerAbb.h>
 
 /* ---------------------------------------------------------------------- */
 template <class T> int read_xml(xml_node<>* node, std::string name, T defaultval, T& result);
@@ -149,66 +149,93 @@ int KankerAbb::saveAbbModule(std::string filepath, std::vector<KankerAbbGlyph>& 
     return -3;
   }
 
-  /* How many floats do we store? */
-  size_t num_floats = 0;
-  for (size_t i = 0; i < message.size(); ++i) {
-    std::vector<std::vector<vec3> >& segments = message[i].segments;
-    for (size_t j = 0; j < segments.size(); ++j) {
-      num_floats += segments[j].size();
-    }
-  }
+  /* 
+     How many floats do we store? 
 
-  /* Write the Glyph record. */
-  ofs << "RECORD Glyph" << std::endl
-      << "  num command;" << std::endl
-      << "  num start_index;" << std::endl
-      << "  num num_elements;" << std::endl
-      << "ENDRECORD" << std::endl
-      << std::endl;
-  
-  /* Write one huge array with all the points. */
-  ofs << "CONST num points{" << num_floats << "} := [";
+     - Each glyph can contain multiple line segments so we loop 
+       over each line segment and count the number of points per 
+       segment. 
+
+     - For every glyph we need to add 2 extra points. The first one 
+       is at the start of a segment which indicates that the I/O
+       port needs to be turned ON and after each segment another 
+       one to turn the I/O port OFF. 
+
+  */
+
+  std::vector<std::string> rapid_points;
+
   for (size_t i = 0; i < message.size(); ++i) {
+
+    /* get the segments that make up the glyph. */
     std::vector<std::vector<vec3> >& segments = message[i].segments;
+    
     for (size_t j = 0; j < segments.size(); ++j) {
+
       std::vector<vec3>& points = segments[j];
+
       for (size_t k = 0; k < points.size(); ++k) {
-        vec3& v = points[k];
-        ofs << v.x << ", " << v.y << "," << v.z;
-        if (k < (points.size() - 1)) {
-          ofs << ",";
+
+        vec3& point = points[k];
+
+        if (k == 0) {
+          /* start of segment. */
+          std::stringstream ss; 
+          std::string point_str; 
+          ss << "[" << point.x <<"," << point.z << "," << point.y << ",0]";
+          point_str = ss.str();
+          rapid_points.push_back(point_str);
+        }
+        
+        /* point */
+        std::stringstream ss; 
+        std::string point_str; 
+        ss << "[" << point.x <<"," << point.z << "," << point.y << ",1]";
+        point_str = ss.str();
+        rapid_points.push_back(point_str);
+
+        if (k == points.size() - 1) {
+          /* end of segment. */
+          std::stringstream ss; 
+          std::string point_str; 
+          ss << "[" << point.x <<"," << point.z << "," << point.y << ",0]";
+          point_str = ss.str();
+          rapid_points.push_back(point_str);
         }
       }
     }
-  }
-  ofs << "];"
-      << std::endl 
+  } /* for message */
+
+  ofs << "MODULE mTEXT" << std::endl << std::endl;
+
+  /* Write the Glyph record. */
+  ofs << "PERS Bool bNewModule := TRUE;" << std::endl
+      << "PERS num nTotalPoints := " << rapid_points.size() << ";" << std::endl
       << std::endl;
-
-  /* Write the glyph array. */
-  size_t offset = 0;;
-  size_t count = 0;
-  ofs << "CONST Glyph glyphs{" << message.size() << "} := [";
-  for (size_t i = 0; i < message.size(); ++i) {
-    std::vector<std::vector<vec3> >& segments = message[i].segments;
-    count = 0;
-    for (size_t j = 0; j < segments.size(); ++j) {
-      std::vector<vec3>& points = segments[j];
-      count += points.size();
+  
+  /* Write one huge array with all the points. */
+  ofs << "PERS num nXYZ_Value{" << rapid_points.size() << ",4} := [";
+  for (size_t i = 0; i < rapid_points.size(); ++i) {
+    ofs << rapid_points[i];
+    if (i < rapid_points.size() - 1) {
+      ofs << ",";
     }
-
-    ofs << "0,"          /* command */
-        << offset << "," /* start index */
-        << count;        /* number of floats/elements. */
-
-    if (i < (message.size() - 1)) {
-      ofs << ", ";
-    }
-
-    offset += count;
   }
 
   ofs << "];";
+
+  /* Write the procedure */
+  ofs << std::endl 
+      << std::endl;
+
+  ofs << "PROC Calculate()" << std::endl
+      << "  nTotalPoints_Robot := nTotalPoints;" << std::endl
+      << "  nXYZ_Value_Robot{" << rapid_points.size() << ",4} := nXYZ_Value{" << rapid_points.size() << ",4};" << std::endl
+      << "  bNewModule := FALSE; " << std::endl
+      << "ENDPROC" << std::endl
+      << std::endl
+      << "ENDMODULE";
+
   ofs.close();
 
   return 0;

@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <FreetypeFont.h>
+#include <kanker/FreetypeFont.h>
 
 GLuint FreetypeFont::vao = 0;
 GLuint FreetypeFont::frag = 0;

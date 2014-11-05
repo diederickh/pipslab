@@ -16,12 +16,11 @@
 #define KANKER_ABB_H
 
 #define ROXLU_USE_MATH
-#define ROXLU_USE_PNG
 #define ROXLU_USE_LOG
 #include <tinylib.h>
 #include <rapidxml.hpp>
-#include <KankerFont.h>
-#include <KankerGlyph.h>
+#include <kanker/KankerFont.h>
+#include <kanker/KankerGlyph.h>
 #include <sstream>
 #include <vector>
 #include <fstream>

@@ -1,4 +1,4 @@
-#include "FBO.h"
+#include <kanker/FBO.h>
 
 FBO::FBO() 
   :fbo(0)

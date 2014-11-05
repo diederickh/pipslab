@@ -11,18 +11,28 @@ include_directories(
 )
 
 set(lib_sources
-  ${sd}/FreetypeFont.cpp
-  ${sd}/Blur.cpp
-  ${sd}/BlurFBO.cpp
-  ${sd}/FBO.cpp
   ${sd}/Ftp.cpp
-  ${sd}/KankerApp.cpp
   ${sd}/KankerAbb.cpp
   ${sd}/KankerAbbController.cpp
   ${sd}/KankerFont.cpp
   ${sd}/KankerGlyph.cpp
-  ${sd}/KankerDrawer.cpp
+)
 
+set(lib_headers 
+  ${bd}/include/kanker/Ftp.h
+  ${bd}/include/kanker/KankerAbb.h
+  ${bd}/include/kanker/KankerAbbController.h
+  ${bd}/include/kanker/KankerFont.h
+  ${bd}/include/kanker/KankerGlyph.h
+  )
+
+set(app_sources
+  ${sd}/KankerApp.cpp
+  ${sd}/FreetypeFont.cpp
+  ${sd}/Blur.cpp
+  ${sd}/BlurFBO.cpp
+  ${sd}/FBO.cpp
+  ${sd}/KankerDrawer.cpp
 )
 
 if (APPLE) 
@@ -55,7 +65,9 @@ if (APPLE)
     -lssl
     -lcrypto
     )
+
 elseif(WIN32)
+
   set(app_libs
     ${EXTERN_LIB_DIR}/glfw3.lib
     ${EXTERN_LIB_DIR}/remoxly.lib
@@ -72,20 +84,19 @@ elseif(WIN32)
     Mfreadwrite.lib             # MFCreateSourceFreaderFromMediaSource
     Shlwapi.lib                 # QISearch (Callback)
     )
+
 endif()
 
 # The library
 add_library(kanker ${lib_sources})
 install(TARGETS kanker ARCHIVE DESTINATION lib)
+install(FILES ${lib_headers} DESTINATION include/kanker)
 
 # The font creator
-add_executable(kankerfont ${sd}/main.cpp ${EXTERN_SRC_DIR}/glad.c)
+add_executable(kankerfont ${sd}/main.cpp ${app_sources} ${EXTERN_SRC_DIR}/glad.c)
 target_link_libraries(kankerfont ${app_libs} kanker)
 install(TARGETS kankerfont RUNTIME DESTINATION bin)
 
-# The ABB app.
-add_executable(kankerabb ${sd}/main_abb.cpp ${sd}/KankerAbbApp.cpp ${EXTERN_SRC_DIR}/glad.c)
-target_link_libraries(kankerabb ${app_libs} kanker)
-install(TARGETS kankerabb RUNTIME DESTINATION bin)
+
 
   

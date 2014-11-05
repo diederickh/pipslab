@@ -1,6 +1,6 @@
 #include <float.h>
 #include <algorithm>
-#include <KankerGlyph.h>
+#include <kanker/KankerGlyph.h>
 
 KankerGlyph::KankerGlyph(int charcode) 
   :charcode(charcode)

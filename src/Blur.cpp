@@ -1,7 +1,7 @@
 #include <vector>
 #include <sstream>
 #include <math.h>
-#include "Blur.h"
+#include <kanker/Blur.h>
 
 /* -------------------------------------------------------------------------------- */
 

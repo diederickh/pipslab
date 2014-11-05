@@ -9,8 +9,6 @@
 #ifndef KANKER_DRAWER_H
 #define KANKER_DRAWER_H
 
-#include <BlurFBO.h>
-
 #define ROXLU_USE_MATH
 #define ROXLU_USE_PNG
 #define ROXLU_USE_OPENGL
@@ -18,8 +16,9 @@
 #include <glad/glad.h>
 #include <tinylib.h>
 
-#include <KankerGlyph.h>
-//class KankerGlyph;
+#include <kanker/BlurFBO.h>
+#include <kanker/KankerGlyph.h>
+
 typedef VertexPT KankerVertex;
 
 static const char* KANKER_VS = ""

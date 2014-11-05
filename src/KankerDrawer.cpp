@@ -1,5 +1,5 @@
 #include <assert.h>
-#include <KankerDrawer.h>
+#include <kanker/KankerDrawer.h>
 
 #define DRAW_LINES 0
 #define DRAW_STRIPS 1
