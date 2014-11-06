@@ -89,11 +89,11 @@ int KankerApp::init() {
 
   gui_abb = new rx::Group("Abb", new rx::RenderGL());
   gui_abb->setWidth(500);
-  gui_abb->add(new Slider<float>("ABB.offset_x", kanker_abb.offset_x, -300, 300, 1));
-  gui_abb->add(new Slider<float>("ABB.offset_y", kanker_abb.offset_y, -300, 300, 1));
-  gui_abb->add(new Slider<float>("ABB.char_scale", kanker_abb.char_scale, 0, 300, 1));
-  gui_abb->add(new Slider<float>("ABB.line_height", kanker_abb.line_height, 0, 300, 1));
-  gui_abb->add(new Slider<float>("ABB.word_spacing", kanker_abb.word_spacing, 0, 300, 1));
+  gui_abb->add(new Slider<float>("ABB.offset_x", kanker_abb.offset_x, -1300, 1300, 1));
+  gui_abb->add(new Slider<float>("ABB.offset_y", kanker_abb.offset_y, -1300, 1300, 1));
+  gui_abb->add(new Slider<float>("ABB.char_scale", kanker_abb.char_scale, 0, 1000, 1));
+  gui_abb->add(new Slider<float>("ABB.line_height", kanker_abb.line_height, 0, 1000, 1));
+  gui_abb->add(new Slider<float>("ABB.word_spacing", kanker_abb.word_spacing, 0, 1000, 1));
   gui_abb->add(new Slider<float>("ABB.range_width (mm)", kanker_abb.range_width, 0, 1500, 1));
   gui_abb->add(new Slider<float>("ABB.range_height (mm)", kanker_abb.range_height, 0, 1500, 1));
   gui_abb->add(new Text("ABB.ftp_url", kanker_abb.ftp_url, 400));
@@ -136,7 +136,8 @@ int KankerApp::init() {
   controller.checkAbbState();
 
   test_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
-
+  test_message = "diederick";
+  // test_message = "x";
   /* Force a load for the settings. */
   on_abb_load_clicked(0, this);
 
@@ -767,7 +768,7 @@ static void on_abb_test_upload_clicked(int id, void* user) {
     return;
   }
   
-  if (0 != app->controller.writeText(1, app->test_message)) {
+  if (0 != app->controller.writeText(12, app->test_message)) {
     RX_ERROR("Failed to write the text to the ABB.");
     return;
   }

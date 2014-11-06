@@ -92,9 +92,9 @@ int KankerAbbController::writeText(int64_t id, std::string text) {
     return -3;
   }
 
-  std::string mod_filepath = rx_to_data_path("text.mod");
+  std::string mod_filepath = rx_to_data_path("mTEXT.mod");
 
-  if (0 != kanker_abb.saveAbbModule(mod_filepath, abb_glyphs)) {
+  if (0 != kanker_abb.saveAbbModule(mod_filepath, id, abb_glyphs)) {
     RX_ERROR("Failed to save the ABB module file.");
     return -4;
   }

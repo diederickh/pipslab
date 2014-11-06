@@ -6,7 +6,7 @@ extern_dir=""
 is_mac=n
 is_linux=n
 is_win=n
-export architecture="i386"
+architecture="i386"
 #export architecture="x86_64"
 
 if [ ! -d build.release ] ; then 
