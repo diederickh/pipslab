@@ -12,7 +12,10 @@
 #ifndef ROXLU_FTP_H
 #define ROXLU_FTP_H
 
-#include <curl/curl.h>
+extern "C" {
+#  include <curl/curl.h>
+}
+
 #include <fstream>
 #include <string>
 

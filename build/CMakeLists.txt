@@ -12,6 +12,8 @@ include_directories(
 
 set(lib_sources
   ${sd}/Ftp.cpp
+  ${sd}/Socket.cpp
+  ${sd}/Buffer.cpp
   ${sd}/KankerAbb.cpp
   ${sd}/KankerAbbController.cpp
   ${sd}/KankerFont.cpp
@@ -74,6 +76,7 @@ elseif(WIN32)
     ${EXTERN_LIB_DIR}/libpng16_static.lib
     ${EXTERN_LIB_DIR}/zlibstatic.lib
     ${EXTERN_LIB_DIR}/freetype.lib
+    ${EXTERN_LIB_DIR}/libcurl.lib
     Opengl32.lib                                   
     ws2_32.lib                  # opengl / glfw
     psapi.lib                   # opengl / glfw
@@ -83,6 +86,12 @@ elseif(WIN32)
     Mfuuid.lib                  # video capture
     Mfreadwrite.lib             # MFCreateSourceFreaderFromMediaSource
     Shlwapi.lib                 # QISearch (Callback)
+
+    )
+
+  add_definitions(
+    -DWIN32_LEAN_AND_MEAN
+    -DCURL_STATICLIB
     )
 
 endif()
@@ -94,9 +103,18 @@ install(FILES ${lib_headers} DESTINATION include/kanker)
 
 # The font creator
 add_executable(kankerfont ${sd}/main.cpp ${app_sources} ${EXTERN_SRC_DIR}/glad.c)
-target_link_libraries(kankerfont ${app_libs} kanker)
+target_link_libraries(kankerfont kanker ${app_libs} )
 install(TARGETS kankerfont RUNTIME DESTINATION bin)
 
+# Test the socket.
+add_executable(test_socket ${sd}/test_socket.cpp)
+target_link_libraries(test_socket kanker ${app_libs} )
+install(TARGETS test_socket RUNTIME DESTINATION bin)
+
+# Test the socket with the ABB.
+add_executable(test_socket_abb ${sd}/test_socket_abb.cpp)
+target_link_libraries(test_socket_abb kanker ${app_libs} )
+install(TARGETS test_socket_abb RUNTIME DESTINATION bin)
 
 
   

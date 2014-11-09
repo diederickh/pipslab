@@ -94,7 +94,7 @@ class KankerApp : public KankerAbbControllerListener {
   int gui_width;                                                                /* The width of the gui, used to position some graphical elements */ 
   std::string font_filename;                                                    /* The last set or loaded file name. */
   int selected_font_dx;                                                         /* Used when loading a font. */
-  ssize_t glyph_dx;                                                             /* Used when showing a loaded font.  Points to a glyph index. */
+  int64_t glyph_dx;                                                             /* Used when showing a loaded font.  Points to a glyph index. */
 
   /* edit state */
   bool is_mouse_inside_char;

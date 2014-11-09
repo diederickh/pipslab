@@ -27,6 +27,11 @@
 #include <tinylib.h>
 
 #include <kanker/FreetypeFont.h>
+
+extern "C" {
+#  include <curl/curl.h>
+}
+
 KankerApp* app_ptr = NULL;
 
 /* ------------------------------------------------------------------------------------ */

@@ -23,7 +23,13 @@ KankerAbb::KankerAbb()
   ,char_scale(15.0f)
   ,word_spacing(40.0f)
   ,line_height(35.0f)
+
+  ,check_abb_state_timeout(0)
+  ,check_abb_state_delay(10e9)
+  ,abb_state(ABB_STATE_UNKNOWN)
+  ,abb_listener(NULL)
 {
+  memset(read_buffer, 0x00, sizeof(read_buffer));
 }
 
 KankerAbb::~KankerAbb() {
@@ -363,6 +369,102 @@ void KankerAbb::print() {
   RX_VERBOSE("abb.word_spacing: %f", word_spacing);
   RX_VERBOSE("abb.line_height: %f", line_height);
   RX_VERBOSE("abb.ftp_url: %s", ftp_url.c_str());
+}
+
+/* ---------------------------------------------------------------------- */
+
+int KankerAbb::connect() {
+
+  if (0 != sock.connect("127.0.0.1", 1025)) {
+    RX_ERROR("Couldn't connect to the ABB");
+    return -1;
+  }
+
+  return 0;
+}
+
+int KankerAbb::processIncomingData() {
+
+  if (0 != sock.isConnected()) {
+    RX_ERROR("We're not connected to the ABB.");
+    return -1;
+  }
+
+  /* Check if there is data on the socket. */
+  if (0 == sock.canRead(0, 100)) {
+    int nread = sock.read(read_buffer, sizeof(read_buffer));
+    if (0 > nread) {
+      RX_ERROR("Got an error while trying to read from socket, we're probably disconnected: %d", nread);
+      return -2;
+    }
+    else if (0 < nread) {
+      RX_VERBOSE("Read: %d bytes, %c", nread, read_buffer[0]);
+
+      /* r = ready to accept new commands, c = client is connected, waiting for commands. */
+      if ('r' == read_buffer[0] || 'c' == read_buffer[0]) {
+        if (ABB_STATE_READY != abb_state) {
+          RX_VERBOSE("Abb is ready to start drawing!");
+          if (NULL != abb_listener) {
+            abb_listener->onAbbReadyToDraw();
+          }
+          else {
+            RX_VERBOSE("We're checking the Abb state but you haven't set a listener so it doesn't really make sense.");
+          }
+          abb_state = ABB_STATE_READY;
+        }
+      }
+      else if ('d' == read_buffer[0]) {
+        RX_VERBOSE("Abb is drawing");
+        if (NULL != abb_listener) {
+          abb_listener->onAbbDrawing();
+        }
+        abb_state = ABB_STATE_DRAWING;
+      }
+    }
+  }
+  else {                                        
+  }
+
+  /* Do we need to update our state? */
+  uint64_t n = rx_hrtime();
+  if (n > check_abb_state_timeout) {
+    RX_VERBOSE("Check state.");
+    check_abb_state_timeout = n + check_abb_state_delay;
+    sendCheckState();
+  }
+  return 0;
+}
+
+int KankerAbb::sendCheckState() {
+  buffer.clear();
+  buffer.writeU8(ABB_CMD_GET_STATE);
+  sock.send(buffer.ptr(), buffer.size());
+  return 0;
+}
+int KankerAbb::sendTestData() {
+  return 0;
+}
+
+int KankerAbb::sendPosition(float x, float y, float z) {
+  buffer.clear();
+  buffer.writeU8(ABB_CMD_POSITION);
+  buffer.writePosition(z, x, y); /* We flip the coordinates. */
+  sock.send(buffer.ptr(), buffer.size());
+  return 0;
+}
+
+int KankerAbb::sendResetPacketIndex() {
+  buffer.clear();
+  buffer.writeU8(ABB_CMD_RESET_PACKET_INDEX);
+  sock.send(buffer.ptr(), buffer.size());
+  return 0;
+}
+
+int KankerAbb::sendDraw() {
+  buffer.clear();
+  buffer.writeU8(ABB_CMD_DRAW);
+  sock.send(buffer.ptr(), buffer.size());
+  return 0;
 }
 
 /* ---------------------------------------------------------------------- */

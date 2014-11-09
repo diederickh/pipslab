@@ -19,6 +19,8 @@
 #define ROXLU_USE_LOG
 #include <tinylib.h>
 #include <rapidxml.hpp>
+#include <kanker/Socket.h>
+#include <kanker/Buffer.h>
 #include <kanker/KankerFont.h>
 #include <kanker/KankerGlyph.h>
 #include <sstream>
@@ -26,6 +28,16 @@
 #include <fstream>
 
 using namespace rapidxml;
+
+#define ABB_CMD_POSITION 0               /* Send a position, command will be x,y,z (floats). */
+#define ABB_CMD_IO 1                     /* We want to toggle an io port, command will be: port-num, on/off. */
+#define ABB_CMD_RESET_PACKET_INDEX 2     /* Reset the read and write index of the packet array on the robot. */
+#define ABB_CMD_DRAW 3                   /* When the robot receives this it will start moving all the received positions / commands. */ 
+#define ABB_CMD_GET_STATE 4              /* Get the state of the ABB. */
+
+#define ABB_STATE_UNKNOWN -1
+#define ABB_STATE_READY 1
+#define ABB_STATE_DRAWING 2
 
 /* ---------------------------------------------------------------------- */
 
@@ -37,6 +49,14 @@ class KankerAbbGlyph {
  public:
   KankerGlyph glyph;
   std::vector<std::vector<vec3> > segments;
+};
+
+/* ---------------------------------------------------------------------- */
+
+class KankerAbbListener {
+ public:
+  virtual void onAbbReadyToDraw() {}
+  virtual void onAbbDrawing() {}
 };
 
 /* ---------------------------------------------------------------------- */
@@ -58,6 +78,18 @@ class KankerAbb {
   int loadSettings(std::string filepath);                                            /* Load the current state of the font. */ 
   void print();                                                                      /* Prints some information about the object. */
 
+  /* --- BEGIN: TEST WITH SOCKET --- */
+  int setAbbListener(KankerAbbListener* lis);
+  int connect();                               /* Connects to the robot. */
+  int processIncomingData();                   /* Checks if there is any data from the ABB */
+  int sendTestData();                          /* Send some test coordinates to the robot. */
+  int sendPosition(float x, float y, float z);
+  int sendResetPacketIndex();
+  int sendCheckState();
+  int sendDraw();
+
+  /* --- END: TEST WITH SOCKET --- */
+
  public:
   float offset_x;       /* used to position all glyphs with a offset. */
   float offset_y;       /* used to position all glyphs with a offset. */
@@ -67,6 +99,26 @@ class KankerAbb {
   float word_spacing;   /* how many mm between words? */ 
   float line_height;    /* mm per line. */
   std::string ftp_url;  /* used by the controller; it would be cleaner to store this in the controller; */
+
+  Socket sock;          /* 2nd version where we communicate over a socket. */
+  Buffer buffer;        /* 2nd version, buffer that we use to pack data. */
+  char read_buffer[1024];
+  uint64_t check_abb_state_timeout;
+  uint64_t check_abb_state_delay;
+  uint8_t abb_state;
+  KankerAbbListener* abb_listener;
 };
+
+inline int KankerAbb::setAbbListener(KankerAbbListener* lis) {
+
+  if (NULL == lis) {
+    RX_ERROR("Failed to set the abb listener because it's NULL");
+    return -1;
+  }
+
+  abb_listener = lis;
+
+  return 0;
+}
 
 #endif
