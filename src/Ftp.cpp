@@ -43,6 +43,12 @@ int Ftp::upload(std::string url, std::string filepath) {
   CURLcode err = CURLE_OK;
   FtpTask* task = NULL;
 
+  struct curl_slist* slist = NULL;
+  static const char* cmd_rnfr = "RNFR /mTEXT.mod";
+  //  static const char* cmd_rnto = "RNTO PIPS_LAB/HOME/mTEXT.mod";
+  static const char* cmd_dele = "DELE mTEXT.mod";
+  static const char* cmd_rnto = "RNTO mTEXT.mod";
+
   url += "/" +rx_strip_dir(filepath);
 
   if (0 == filepath.size()) {
@@ -97,6 +103,22 @@ int Ftp::upload(std::string url, std::string filepath) {
   if (CURLE_OK != err) {
     RX_ERROR("Failed to enable uploading.");
     r = -6;
+    goto error;
+  }
+
+  /* Move to other directory */
+  slist = curl_slist_append(slist, cmd_dele);
+  slist = curl_slist_append(slist, cmd_rnfr);
+  slist = curl_slist_append(slist, cmd_rnto);
+  curl_easy_setopt(task->curl, CURLOPT_POSTQUOTE, slist);
+
+  /* Set FTP method (needed for ABB ftp) */
+  err = curl_easy_setopt(task->curl, CURLOPT_FTP_FILEMETHOD, CURLFTPMETHOD_NOCWD);
+  //  err = curl_easy_setopt(task->curl, CURLOPT_FTP_FILEMETHOD, CURLFTPMETHOD_SINGLECWD);
+  //err = curl_easy_setopt(task->curl, CURLOPT_FTP_FILEMETHOD, CURLFTPMETHOD_MULTICWD);
+  if (CURLE_OK != err) {
+    RX_ERROR("Failed to set the FTP method.");
+    r = -100;
     goto error;
   }
 

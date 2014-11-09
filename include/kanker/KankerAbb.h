@@ -26,6 +26,7 @@
 #include <sstream>
 #include <vector>
 #include <fstream>
+#include <stdint.h>
 
 using namespace rapidxml;
 
@@ -72,7 +73,7 @@ class KankerAbb {
             std::vector<KankerAbbGlyph>& out,                                        /* We will fill this vector with glyphs that can be passed into `save()`. */
             std::vector<std::vector<vec3> >& segmentsOut);                           /* Contains only the line segments, used to draw. */
 
-  int saveAbbModule(std::string filepath, std::vector<KankerAbbGlyph>& message);     /* Save the given glyphs into a file that can be read by the ABB. */
+  int saveAbbModule(std::string filepath, int64_t id, std::vector<KankerAbbGlyph>& message);     /* Save the given glyphs into a file that can be read by the ABB. */
   float getWordWidth(KankerFont& font, std::string word);                            /* Returns the width of the given word in milimeters. */
   int saveSettings(std::string filepath);                                            /* Save the current state of the font. */ 
   int loadSettings(std::string filepath);                                            /* Load the current state of the font. */ 

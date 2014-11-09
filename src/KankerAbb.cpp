@@ -35,7 +35,7 @@ KankerAbb::KankerAbb()
 KankerAbb::~KankerAbb() {
 }
 
-int KankerAbb::write(KankerFont& font, 
+int KankerAbb::write(KankerFont& font,
                      std::string str,
                      std::vector<KankerAbbGlyph>& result,
                      std::vector<std::vector<vec3> >& segmentsOut)
@@ -137,7 +137,7 @@ int KankerAbb::write(KankerFont& font,
   return 0;
 }
 
-int KankerAbb::saveAbbModule(std::string filepath, std::vector<KankerAbbGlyph>& message) {
+int KankerAbb::saveAbbModule(std::string filepath, int64_t id, std::vector<KankerAbbGlyph>& message) {
 
   if (0 == filepath.size()) {
     RX_ERROR("Cannot save, invalid filepath.");
@@ -183,12 +183,18 @@ int KankerAbb::saveAbbModule(std::string filepath, std::vector<KankerAbbGlyph>& 
       for (size_t k = 0; k < points.size(); ++k) {
 
         vec3& point = points[k];
+        //point *= 5;
+        //point.y += 650;
+        point.z = 660;
+        //point.x += 0;
+        point.print();
 
         if (k == 0) {
           /* start of segment. */
           std::stringstream ss; 
           std::string point_str; 
-          ss << "[" << point.x <<"," << point.z << "," << point.y << ",0]";
+          //          ss << "[" << point.x <<"," << point.y << "," << point.z << ",0]";
+          ss << "[" << (point.z) <<"," << point.x << "," << point.y << ",0]\n";
           point_str = ss.str();
           rapid_points.push_back(point_str);
         }
@@ -196,7 +202,8 @@ int KankerAbb::saveAbbModule(std::string filepath, std::vector<KankerAbbGlyph>& 
         /* point */
         std::stringstream ss; 
         std::string point_str; 
-        ss << "[" << point.x <<"," << point.z << "," << point.y << ",1]";
+        //        ss << "[" << point.x <<"," << point.y << "," << point.z << ",1]";
+        ss << "[" << ( point.z) <<"," << point.x << "," << point.y << ",1]\n";
         point_str = ss.str();
         rapid_points.push_back(point_str);
 
@@ -204,7 +211,8 @@ int KankerAbb::saveAbbModule(std::string filepath, std::vector<KankerAbbGlyph>& 
           /* end of segment. */
           std::stringstream ss; 
           std::string point_str; 
-          ss << "[" << point.x <<"," << point.z << "," << point.y << ",0]";
+          //          ss << "[" << point.x <<"," << point.y << "," << point.z << ",0]";
+          ss << "[" << ( point.z) <<"," << point.x << "," << point.y << ",0]\n";
           point_str = ss.str();
           rapid_points.push_back(point_str);
         }
@@ -215,7 +223,8 @@ int KankerAbb::saveAbbModule(std::string filepath, std::vector<KankerAbbGlyph>& 
   ofs << "MODULE mTEXT" << std::endl << std::endl;
 
   /* Write the Glyph record. */
-  ofs << "PERS Bool bNewModule := TRUE;" << std::endl
+  //  << "PERS Bool bNewModule := TRUE;" << std::endl
+  ofs << "PERS num nMessageId := " << id << ";" << std::endl
       << "PERS num nTotalPoints := " << rapid_points.size() << ";" << std::endl
       << std::endl;
   
@@ -236,8 +245,15 @@ int KankerAbb::saveAbbModule(std::string filepath, std::vector<KankerAbbGlyph>& 
 
   ofs << "PROC Calculate()" << std::endl
       << "  nTotalPoints_Robot := nTotalPoints;" << std::endl
-      << "  nXYZ_Value_Robot{" << rapid_points.size() << ",4} := nXYZ_Value{" << rapid_points.size() << ",4};" << std::endl
-      << "  bNewModule := FALSE; " << std::endl
+      << "  FOR i from 1 to nTotalPoints DO" << std::endl
+      << "      nXYZ_Value_Robot{i, 1} := nXYZ_Value{i,1};" << std::endl
+      << "      nXYZ_Value_Robot{i, 2} := nXYZ_Value{i,2};" << std::endl
+      << "      nXYZ_Value_Robot{i, 3} := nXYZ_Value{i,3};" << std::endl
+      << "      nXYZ_Value_Robot{i, 4} := nXYZ_Value{i,4};" << std::endl
+      << "  ENDFOR" << std::endl
+    //      << "  nXYZ_Value_Robot{" << rapid_points.size() << ",4} := nXYZ_Value{" << rapid_points.size() << ",4};" << std::endl
+    //      << "  bNewModule := FALSE; " << std::endl
+      << "  nMessageId_Robot := nMessageId;" << std::endl
       << "ENDPROC" << std::endl
       << std::endl
       << "ENDMODULE";
