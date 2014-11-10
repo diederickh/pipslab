@@ -84,6 +84,8 @@ class KankerAbb : public SocketListener {
   int loadSettings(std::string filepath);                                            /* Load the current state of the font. */ 
   void print();                                                                      /* Prints some information about the object. */
 
+  std::vector<vec3> simplify(std::vector<vec3>& in, float minDist);
+
   vec3 convertFontPointToAbbPoint(vec3& v); /* This makes sure that the input position can be used by the robot. */
 
   /* --- BEGIN: TEST WITH SOCKET --- */
@@ -106,8 +108,8 @@ class KankerAbb : public SocketListener {
  public:
   float offset_x;       /* used to position all glyphs with a offset. */
   float offset_y;       /* used to position all glyphs with a offset. */
-  float range_width;    /* range in milimeters */
-  float range_height;   /* range in milimeters */
+  float range_width;    /* range in milimeters @deprecated, use min_x, max_x */
+  float range_height;   /* range in milimeters @deprecated, use min_y, max_y */
   float char_scale;     /* how to scale the characters. */
   float word_spacing;   /* how many mm between words? */ 
   float line_height;    /* mm per line. */
@@ -115,6 +117,7 @@ class KankerAbb : public SocketListener {
   int max_x;
   int min_y;
   int max_y;
+  float min_point_dist; /* mininum distance in pixels between two points; used to simplify the font. */
   std::string ftp_url;  /* used by the controller; it would be cleaner to store this in the controller; */
   std::string abb_host; 
   int abb_port; 

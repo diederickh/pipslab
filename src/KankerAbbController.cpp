@@ -139,6 +139,8 @@ void KankerAbbController::update() {
   }
 #endif
 
+
+  // TMP disabled to update the point calcs.
   kanker_abb.processIncomingData();
 }
 

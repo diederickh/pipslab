@@ -104,6 +104,7 @@ int KankerApp::init() {
   gui_abb->add(new Slider<int>("ABB.max_x", kanker_abb.max_x, -15000, 15000, 1));
   gui_abb->add(new Slider<int>("ABB.min_y", kanker_abb.min_y, -15000, 15000, 1));
   gui_abb->add(new Slider<int>("ABB.max_y", kanker_abb.max_y, -15000, 15000, 1));
+  gui_abb->add(new Slider<float>("ABB.min_point_dist", kanker_abb.min_point_dist, 1.0, 5.0, 0.5));
   gui_abb->add(new Text("ABB.ftp_url", kanker_abb.ftp_url, 400));
   gui_abb->add(new Text("ABB.host", kanker_abb.abb_host, 400));
   gui_abb->add(new Slider<int>("ABB.port", kanker_abb.abb_port, 0, 999999, 1));
@@ -146,10 +147,11 @@ int KankerApp::init() {
   controller.checkAbbState();
 
   test_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
-  test_message = "diederick aaaaa bbbbb";
-  //  test_message = "aaaaaa";
-  //  test_message = "bbbbbb";
+  //test_message = "diederick ddddd aaa";
+  //test_message = "aaaaaa";
+  //test_message = "bbbbbb";
   //test_message = "x";
+  //test_message = "d";
   /* Force a load for the settings. */
   on_abb_load_clicked(0, this);
 
@@ -232,6 +234,10 @@ void KankerApp::drawStateFontTest() {
     preview_drawer.updateVertices(points);
     preview_drawer.drawLines();
   }
+
+  painter.hex("00FF00");
+  painter.line(0.0, kanker_abb.line_height, painter.width(), kanker_abb.line_height);
+  painter.draw();
 
   gui_abb->draw();
   drawGui();

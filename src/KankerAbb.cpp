@@ -27,6 +27,7 @@ KankerAbb::KankerAbb()
   ,max_x(0)
   ,min_y(0)
   ,max_y(0)
+  ,min_point_dist(3.0)
 
   ,check_abb_state_timeout(0)
   ,check_abb_state_delay(10e9)
@@ -107,17 +108,31 @@ int KankerAbb::write(KankerFont& font,
       abb_glyph.glyph.scale(char_scale);
       abb_glyph.glyph.translate(pen_x + offset_x, pen_y + offset_y);
 
+      for (size_t k = 0; k < abb_glyph.glyph.segments.size(); ++k) {
+
+        std::vector<vec3> simplified_segment = simplify(abb_glyph.glyph.segments[k], min_point_dist);
+        if (0 == simplified_segment.size()) {
+          RX_VERBOSE("After simplifying the segment we haven't got anythin left.");
+          continue;
+        }
+
+        abb_glyph.segments.push_back(simplified_segment);
+        segmentsOut.push_back(simplified_segment);
+      }
+
+      result.push_back(abb_glyph);
+#if 0
       std::copy(abb_glyph.glyph.segments.begin(),
                 abb_glyph.glyph.segments.end(), 
                 std::back_inserter(abb_glyph.segments));
 
       result.push_back(abb_glyph);
 
-     std::copy(abb_glyph.glyph.segments.begin(),
+      std::copy(abb_glyph.glyph.segments.begin(),
                 abb_glyph.glyph.segments.end(), 
                 std::back_inserter(segmentsOut));
-
-
+#endif
+     
       pen_x += abb_glyph.glyph.advance_x;
     }
 
@@ -143,6 +158,42 @@ int KankerAbb::write(KankerFont& font,
   }
 
   return 0;
+}
+
+std::vector<vec3> KankerAbb::simplify(std::vector<vec3>& points, float minDist) {
+
+  /* Points closer then `min_dist` pixels are removed */
+  float min_dist_sq = minDist * minDist;
+  float dist_sq;
+  int to_big = 0;
+  size_t total= 0;
+  size_t read_dx = 1;
+  std::vector<vec3> new_points;
+
+  if (0 == points.size()) {
+    return points;
+  } 
+
+  vec3& point_from = points[0];
+  new_points.push_back(point_from);
+  dist_sq = 0;
+
+  while (dist_sq < min_dist_sq && read_dx < points.size()) {
+
+      vec3& a = points[read_dx];
+      vec3 d = point_from - a;
+      dist_sq = dot(d, d);
+
+      if (dist_sq >= min_dist_sq) {
+        point_from = points[read_dx];
+        new_points.push_back(point_from);
+        dist_sq = 0;
+      }
+
+      read_dx++;
+  }
+
+  return new_points;
 }
 
 int KankerAbb::saveAbbModule(std::string filepath, int64_t id, std::vector<KankerAbbGlyph>& message) {
@@ -623,28 +674,50 @@ int KankerAbb::sendNextGlyph() {
   }
 
   for (size_t j = 0; j < segments.size(); ++j) {
+
     std::vector<vec3>& points = segments[j];
     RX_VERBOSE("Got %lu points in segment: %lu", points.size(), j);
+
     for (size_t k = 0; k < points.size(); ++k) {
       vec3& v = points[k];
-
+      //v.print();
       vec3 p = convertFontPointToAbbPoint(v);
       buffer.writeU8(ABB_CMD_POSITION);
       buffer.writePosition(p.x, p.y, p.z);
       //buffer.writePosition(p.z, p.x, -1.0 * p.y);
-      //  RX_VERBOSE("Position: %f, %f, %f", p.x, -1.0 * p.y, p.z);
-      RX_VERBOSE("Position: %f, %f, %f", p.x, p.y, p.z);
+      //  RX_VERBOSE("Position: %f, %f, %f", p.x, -1.0 * p.y, p.z); // old w/o convertFontPointTo...
+      //RX_VERBOSE("Position: %f, %f, %f", p.x, p.y, p.z);
 
       // if (buffer.size() > max_buf_size) {
       //RX_VERBOSE("Sending %lu bytes to Abb.", buffer.size());
         // SLEEP_MILLIS(50);
         //}
     }
+
+#if 1
+    /* 
+       RAPID can only store 1024 bytes :/, therefore we transfer position data per segment
+       as the are most of the time less then 1024 bytes. At this moment we're not yet
+       handling buffers > 1024 in rapid. 
+
+       @todo When we fixed handling buffers that are bigger then 1024 bytes update this comment. 
+    */
+    if (1024 < buffer.size()) {
+      RX_ERROR("The buffer contains to much bytes, %lu", buffer.size());
+    }
+
+    RX_VERBOSE("Sending %lu bytes", buffer.size());
+    //buffer.writeU8(ABB_CMD_DRAW);
+    sock.send(buffer.ptr(), buffer.size());
+    buffer.clear();
+#endif
   }
 
   if (1024 < buffer.size()) {
     RX_ERROR("The buffer contains to much bytes, %lu", buffer.size());
   }
+
+  RX_VERBOSE("Sending %lu bytes", buffer.size());
 
   buffer.writeU8(ABB_CMD_DRAW);
   sock.send(buffer.ptr(), buffer.size());
@@ -721,17 +794,35 @@ int KankerAbb::sendText(std::vector<KankerAbbGlyph>& message) {
 
   return 0;
 }
+
+/* Converts/flips font points to abb points */
 vec3 KankerAbb::convertFontPointToAbbPoint(vec3& v) {
 
   if (0 != v.z) {
     RX_VERBOSE("Currently we're using a fixed depth value of 0.");
   }
+  float x = 0.0f;
+  float y = 0.0f;
+  float z = 0.0f;
+  float range_x = max_x - min_x;
+  float range_y = max_y - min_y;
+  float px = (v.x / range_x);
+  float py = (v.y / range_y);
+  
+  //RX_VERBOSE("range_x: %f, range_y: %f", range_x, range_y);
 
-  float x = v.x;
-  float y = (-1.0 * v.y);
-  float z = 0.0; /* skipping z for now.*/
+  x = min_x + px * range_x;
+  y = (max_y-line_height) + line_height - (py * range_y);
+  //  y = min_y + line_height - (py * range_y);
+  
+  //y = range_y - (min_y + ((py * range_y)));
+  
+  /*
+  x = v.x;
+  y = (-1.0 * v.y);
+  z = 0.0; // skipping z for now.
+  */
 
-  RX_VERBOSE("YYYYY: %f, v.y: %f, y: %f", offset_y, v.y, y);
   if (x < min_x) {
     x = min_x;
   }
@@ -740,9 +831,12 @@ vec3 KankerAbb::convertFontPointToAbbPoint(vec3& v) {
   }
 
   if (y < min_y) {
+    RX_VERBOSE("y < min_y: %f", y);
     y = min_y;
+
   }
   else if (y > max_y) {
+    RX_VERBOSE("y > max_y: %f, py: %f, (py * range_y): %f, v.y: %f", y, py, (py * range_y), v.y);
     y = max_y;
   }
 
