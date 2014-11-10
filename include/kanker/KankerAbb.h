@@ -42,6 +42,7 @@ using namespace rapidxml;
 #define ABB_STATE_DISCONNECTED 3         /* We're disconnected and we'll automatically try to reconnect */ 
 #define ABB_STATE_CONNECTED 4            /* We're connected with the ABB. */
 
+
 /* ---------------------------------------------------------------------- */
 
 class KankerAbbGlyph {
@@ -83,15 +84,17 @@ class KankerAbb : public SocketListener {
   int loadSettings(std::string filepath);                                            /* Load the current state of the font. */ 
   void print();                                                                      /* Prints some information about the object. */
 
-  void checkAbbPosition(vec3& v); /* This makes sure that the input position can be used by the robot. */
+  vec3 convertFontPointToAbbPoint(vec3& v); /* This makes sure that the input position can be used by the robot. */
 
   /* --- BEGIN: TEST WITH SOCKET --- */
+  void update();
   int setAbbListener(KankerAbbListener* lis);
   int connect();                                      /* Connects to the robot. */
   int processIncomingData();                          /* Checks if there is any data from the ABB */
   int sendTestData();                                 /* Send some test coordinates to the robot. */
   int sendPosition(float x, float y, float z);
   int sendText(std::vector<KankerAbbGlyph>& glyphs);  /* Send a complete text to the Abb. */ 
+  int sendNextGlyph();               
   int sendTestPositions();                            /* Sends some test positions. */
   int sendResetPacketIndex();
   int sendCheckState();
@@ -123,8 +126,11 @@ class KankerAbb : public SocketListener {
   uint64_t check_abb_state_delay;
   uint64_t abb_reconnect_timeout;
   uint64_t abb_reconnect_delay;
-  uint8_t abb_state;
+  uint8_t abb_state; /* Remove, robot state. */
+
   KankerAbbListener* abb_listener;
+  std::vector<KankerAbbGlyph> curr_message;
+  size_t curr_glyph_index;
 };
 
 inline int KankerAbb::setAbbListener(KankerAbbListener* lis) {

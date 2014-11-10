@@ -43,7 +43,13 @@ int main() {
   
   KankerAbb abb;
   AbbListener abb_listener(&abb);
- 
+
+  /* These values are found by trial and error. */
+  abb.min_x = -680;
+  abb.max_x = 680;
+  abb.min_y = -300;
+  abb.max_y = 200;
+
  if (0 != abb.setAbbListener(&abb_listener)) {
     RX_ERROR("Failed to set the abb listener.");
     exit(1);
@@ -77,6 +83,9 @@ AbbListener::AbbListener(KankerAbb* abb)
 
 void AbbListener::onAbbReadyToDraw() {
 
+  RX_VERBOSE("Returning directly in onAbbReadyToDraw");
+  return; 
+
   static uint64_t counter = 0;
 
   RX_VERBOSE("The ABB is ready to draw, change..");
@@ -89,52 +98,31 @@ void AbbListener::onAbbReadyToDraw() {
   std::vector<vec3> positions;
   int draw_mode = counter % 3;
   if (0 == draw_mode) {
-    positions.push_back(vec3(0, -680, -300));
-    positions.push_back(vec3(0, 680, -300));
-    positions.push_back(vec3(0, 680, 220));
-    positions.push_back(vec3(0, -680, 220));
-    positions.push_back(vec3(0, -680, -300));
+    positions.push_back(vec3(-680, -300, 0));
+    positions.push_back(vec3(680, -300, 0));
+    positions.push_back(vec3(680, 220, 0));
+    positions.push_back(vec3(-680, 220, 0));
+    positions.push_back(vec3(-680, -300, 0));
 
 
   }
   else if (1 == draw_mode) {
-    positions.push_back(vec3(0, -680, 0));
-    positions.push_back(vec3(0, 680, 0));
+    positions.push_back(vec3(-680, 0, 0));
+    positions.push_back(vec3(680, 0, 0));
     positions.push_back(vec3(0, 0, 0));
   }
   else if (2 == draw_mode) {
     positions.push_back(vec3(0, 0, 0));
-    positions.push_back(vec3(0, 0, -300));
+    positions.push_back(vec3(0, -300, 0));
     positions.push_back(vec3(0, 0, 0));
-    positions.push_back(vec3(0, 0, -300));
+    positions.push_back(vec3(0, -300, 0));
     positions.push_back(vec3(0, 0, 0));
-    positions.push_back(vec3(0, 0, -300));
+    positions.push_back(vec3(0, -300, 0));
     positions.push_back(vec3(0, 0, 0));
   }
   else {
     RX_VERBOSE("Unhandled draw mode: %d", draw_mode);
   }
-
-#if 0  
-  positions.clear();
-  positions.push_back(vec3(0, -680, -300));
-  positions.push_back(vec3(0, 680, -300));
-  positions.push_back(vec3(0, 680, 220));
-  positions.push_back(vec3(0, -680, 220));
-  positions.push_back(vec3(0, -680, -300));
-
-  positions.push_back(vec3(0, -680, 0));
-  positions.push_back(vec3(0, 680, 0));
-  positions.push_back(vec3(0, 0, 0));
-
-  positions.push_back(vec3(0, 0, 0));
-  positions.push_back(vec3(0, 0, -300));
-  positions.push_back(vec3(0, 0, 0));
-  positions.push_back(vec3(0, 0, -300));
-  positions.push_back(vec3(0, 0, 0));
-  positions.push_back(vec3(0, 0, -300));
-  positions.push_back(vec3(0, 0, 0));
-#endif
 
   for (size_t i = 0; i < positions.size(); ++i) {
     vec3& v = positions[i];
@@ -154,6 +142,52 @@ void AbbListener::onAbbDrawing() {
 
 void AbbListener::onAbbConnected() {
   RX_VERBOSE("Connected with Abb");
+
+  std::vector<KankerAbbGlyph> test_message;
+  std::vector<vec3> positions;
+  KankerAbbGlyph glyph;
+  
+  {
+    positions.push_back(vec3(-680, -300, 0));
+    positions.push_back(vec3(680, -300, 0));
+    positions.push_back(vec3(680, 220, 0));
+    positions.push_back(vec3(-680, 220, 0 ));
+    positions.push_back(vec3(-680, -300, 0));
+
+    glyph.segments.push_back(positions);
+    test_message.push_back(glyph);
+    positions.clear();
+    glyph.segments.clear();
+  }
+
+  {
+    positions.push_back(vec3(-680, 0, 0));
+    positions.push_back(vec3(680, 0, 0));
+    positions.push_back(vec3(0, 0, 0));
+
+    glyph.segments.push_back(positions);
+    test_message.push_back(glyph);
+    positions.clear();
+    glyph.segments.clear();
+  }
+
+  {
+    positions.push_back(vec3(0, 0, 0));
+    positions.push_back(vec3(0, -300, 0 ));
+    positions.push_back(vec3(0, 0, 0));
+    positions.push_back(vec3(0, -300, 0));
+    positions.push_back(vec3(0, 0, 0));
+    positions.push_back(vec3(0, -300, 0));
+    positions.push_back(vec3(0, 0, 0));
+
+    glyph.segments.push_back(positions);
+    test_message.push_back(glyph);
+    positions.clear();
+    glyph.segments.clear();
+  }
+
+  RX_VERBOSE("Send the test message");
+  abb->sendText(test_message);
 }
 
 void AbbListener::onAbbDisconnected() {

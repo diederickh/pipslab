@@ -34,6 +34,7 @@ KankerAbb::KankerAbb()
   ,abb_reconnect_delay(2e9)
   ,abb_state(ABB_STATE_DISCONNECTED)
   ,abb_listener(NULL)
+  ,curr_glyph_index(0)
 
 {
   memset(read_buffer, 0x00, sizeof(read_buffer));
@@ -414,6 +415,10 @@ void KankerAbb::print() {
 
 /* ---------------------------------------------------------------------- */
 
+void KankerAbb::update() {
+  
+}
+
 int KankerAbb::connect() {
 
   if (0 != sock.setListener(this)) {
@@ -459,16 +464,18 @@ int KankerAbb::processIncomingData() {
       RX_VERBOSE("Read: %d bytes, %c", nread, read_buffer[0]);
 
       /* r = ready to accept new commands, c = client is connected, waiting for commands. */
-      if ('r' == read_buffer[0] || 'c' == read_buffer[0]) {
+      if ('r' == read_buffer[0]) { 
         if (ABB_STATE_READY != abb_state) {
           RX_VERBOSE("Abb is ready to start drawing!");
           if (NULL != abb_listener) {
-            abb_listener->onAbbReadyToDraw();
+            //abb_listener->onAbbReadyToDraw();
           }
           else {
             RX_VERBOSE("We're checking the Abb state but you haven't set a listener so it doesn't really make sense.");
           }
           abb_state = ABB_STATE_READY;
+          
+          sendNextGlyph();
         }
       }
       else if ('d' == read_buffer[0]) {
@@ -580,7 +587,7 @@ int KankerAbb::sendTestPositions() {
   buffer.clear();
   for (size_t i = 0; i < positions.size(); ++i) {
     vec3& v = positions[i];
-    checkAbbPosition(v);
+    vec3 p = convertFontPointToAbbPoint(v); 
     buffer.writeU8(ABB_CMD_POSITION);
     buffer.writeFloat(v.z); /* depth */
     buffer.writeFloat(v.x); /* left right */
@@ -599,6 +606,61 @@ int KankerAbb::sendTestPositions() {
   return 0;
 }
 
+int KankerAbb::sendNextGlyph() {
+
+  buffer.clear();
+
+  if (curr_glyph_index >= curr_message.size()) {
+    RX_VERBOSE("READY WITH SENDING MESSAGE");
+    return 0;
+  }
+
+  /* get the segments that make up the glyph. */
+  KankerAbbGlyph& g = curr_message[curr_glyph_index];
+  std::vector<std::vector<vec3> >& segments = g.segments;
+  if (0 == segments.size()) {
+    RX_ERROR("No semgents in current glyph.");
+  }
+
+  for (size_t j = 0; j < segments.size(); ++j) {
+    std::vector<vec3>& points = segments[j];
+    RX_VERBOSE("Got %lu points in segment: %lu", points.size(), j);
+    for (size_t k = 0; k < points.size(); ++k) {
+      vec3& v = points[k];
+
+      vec3 p = convertFontPointToAbbPoint(v);
+      buffer.writeU8(ABB_CMD_POSITION);
+      buffer.writePosition(p.x, p.y, p.z);
+      //buffer.writePosition(p.z, p.x, -1.0 * p.y);
+      //  RX_VERBOSE("Position: %f, %f, %f", p.x, -1.0 * p.y, p.z);
+      RX_VERBOSE("Position: %f, %f, %f", p.x, p.y, p.z);
+
+      // if (buffer.size() > max_buf_size) {
+      //RX_VERBOSE("Sending %lu bytes to Abb.", buffer.size());
+        // SLEEP_MILLIS(50);
+        //}
+    }
+  }
+
+  if (1024 < buffer.size()) {
+    RX_ERROR("The buffer contains to much bytes, %lu", buffer.size());
+  }
+
+  buffer.writeU8(ABB_CMD_DRAW);
+  sock.send(buffer.ptr(), buffer.size());
+
+  //sock.send(buffer.ptr(), buffer.size());
+  //buffer.clear();
+
+  if (0 != buffer.size()) {
+    //sock.send(buffer.ptr(), buffer.size());
+    //buffer.clear();
+  }
+
+  curr_glyph_index++;
+  RX_VERBOSE(">>> %lu", curr_glyph_index);
+}
+
 int KankerAbb::sendText(std::vector<KankerAbbGlyph>& message) {
 
   RX_VERBOSE("Requested a sendText()");
@@ -608,6 +670,12 @@ int KankerAbb::sendText(std::vector<KankerAbbGlyph>& message) {
     return -1;
   }
 
+  curr_glyph_index = 0;
+  curr_message = message;
+
+  sendNextGlyph();
+
+#if 0
   int max_buf_size = 500;
 
   buffer.clear();
@@ -649,19 +717,37 @@ int KankerAbb::sendText(std::vector<KankerAbbGlyph>& message) {
     return -2;
   }
   */
+#endif
 
   return 0;
 }
-
-void KankerAbb::checkAbbPosition(vec3& v) {
+vec3 KankerAbb::convertFontPointToAbbPoint(vec3& v) {
 
   if (0 != v.z) {
     RX_VERBOSE("Currently we're using a fixed depth value of 0.");
   }
-  
-  v.x = CLAMP(v.x, min_x, max_x);
-  v.y = CLAMP(v.y, min_y, max_y);
-  v.z = 0.0; /* for now we make sure that the 'depth' is the same. */
+
+  float x = v.x;
+  float y = (-1.0 * v.y);
+  float z = 0.0; /* skipping z for now.*/
+
+  RX_VERBOSE("YYYYY: %f, v.y: %f, y: %f", offset_y, v.y, y);
+  if (x < min_x) {
+    x = min_x;
+  }
+  else if (x > max_x) {
+    x = max_x;
+  }
+
+  if (y < min_y) {
+    y = min_y;
+  }
+  else if (y > max_y) {
+    y = max_y;
+  }
+
+  vec3 r(z, x, y);
+  return r;
 }
 
 /* ---------------------------------------------------------------------- */

@@ -146,8 +146,9 @@ int KankerApp::init() {
   controller.checkAbbState();
 
   test_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
-  test_message = "diederick";
-  test_message = "aaaaaa";
+  test_message = "diederick aaaaa bbbbb";
+  //  test_message = "aaaaaa";
+  //  test_message = "bbbbbb";
   //test_message = "x";
   /* Force a load for the settings. */
   on_abb_load_clicked(0, this);
@@ -840,7 +841,7 @@ static void on_simplify_clicked(int id, void* user) {
   }
 
   /* Points closer then `min_dist` pixels are removed */
-  float min_dist = 35;
+  float min_dist = 10;
   float min_dist_sq = min_dist * min_dist;
   float dist_sq;
   int to_big = 0;
