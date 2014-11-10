@@ -30,6 +30,7 @@ int socket_shutdown() { return 0; }
 
 Socket::Socket() 
   :handle(-1)
+  ,listener(NULL)
 {
   if (-1 != handle) {
     close();
@@ -38,6 +39,7 @@ Socket::Socket()
 
 Socket::~Socket() {
   RX_ERROR("We need to cleanup / close the socket when it's open.");
+  listener = NULL;
 }
 
 int Socket::connect(std::string host, uint16_t port) {
@@ -104,7 +106,12 @@ int Socket::connect(std::string host, uint16_t port) {
   if (NULL == rp) {
     RX_ERROR("Could not connect to %s:%u", host.c_str(), port);
     close();
+    RX_ERROR("closed....");
     return -5;
+  }
+
+  if (NULL != listener) {
+    listener->onSocketConnected();
   }
 
   return 0;
@@ -155,9 +162,9 @@ int Socket::send(const char* data, int nbytes) {
         RX_ERROR("Failed to cleanly close the socket after being disconnected.");
       }
 
-      //if (NULL != listener) {
-        //listener->onSocketDisconnected();
-      //}
+      if (NULL != listener) {
+        listener->onSocketDisconnected();
+      }
 
       return -3;
     }
@@ -191,6 +198,17 @@ int Socket::canRead(int sec, int usec) {
   }
   else if (r < 0) {
     RX_ERROR("Socket error: %s", strerror(errno));
+    if (0 != socket_is_recoverable_error(errno)) {
+
+      if (0 != close()) {
+        RX_ERROR("Erorr while trying to closing the socket after an unrecoverable error occured.");
+        return -1;
+      }
+
+      if (NULL != listener) {
+        listener->onSocketDisconnected();
+      }
+    }
     return -1;
   }
 
@@ -234,9 +252,9 @@ int Socket::read(char* buffer, int nbytes) {
     return -5;
   }
 
-  //if (NULL != listener) {
-  //  listener->onSocketRead(buffer, r);
-  // }
+//  if (NULL != listener) {
+//    listener->onSocketRead(buffer, r);
+//  }
   return r;
 }
 
@@ -251,7 +269,49 @@ int Socket::close() {
   if (-1 != handle) {
     errno = EINTR;
 #if defined(_WIN32)      
-    while (::closesocket(handle) != 0) { }
+    int result = -1;
+    int err = 0;
+    do { 
+
+      result = ::closesocket(handle);
+      handle = -1; /* event when closesocket returns < 0, we unset the handle so we can reuse it. */
+
+      if (0 != result) {
+
+        err = socket_get_error();
+
+        switch(result) {
+          case WSANOTINITIALISED: {
+            RX_ERROR("Socket not initialized.");
+            return 0;
+          }
+          case WSAENETDOWN: {
+            RX_ERROR("Network is down. Socket closed");
+            return 0;
+          }
+          case WSAENOTSOCK: {
+            RX_ERROR("The `sock` member is not a real socket. This is not supposed to happen.");
+            return 0;
+          }
+          case WSAEINPROGRESS: {
+            RX_VERBOSE("We're in the process of closing the socket; continuing.");
+            return 0;
+          }
+          case WSAEINTR: {
+            RX_VERBOSE("Call was interrupted.");
+            return 0;
+          }
+          case WSAEWOULDBLOCK: {
+            RX_ERROR("WSAWOULDBLOCK");
+            return 0;
+          }
+          default: {
+            RX_ERROR("Unhandled error in close(), error: %d", err);
+            return 0;
+          }
+        }
+      }
+    } while (0 != result);
 #else
     while (::close(handle) != 0 && EINTR == errno) { }
 #endif

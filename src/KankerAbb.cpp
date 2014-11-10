@@ -26,6 +26,8 @@ KankerAbb::KankerAbb()
 
   ,check_abb_state_timeout(0)
   ,check_abb_state_delay(10e9)
+  ,abb_reconnect_timeout(0)
+  ,abb_reconnect_delay(5e9)
   ,abb_state(ABB_STATE_UNKNOWN)
   ,abb_listener(NULL)
 {
@@ -396,16 +398,34 @@ int KankerAbb::connect() {
     return -1;
   }
 
+  if (0 != sock.setListener(this)) {
+    RX_ERROR("Couldn't set the socket listener.");
+    return -2;
+  }
+
   return 0;
 }
 
 int KankerAbb::processIncomingData() {
 
+  /* When disconnected we try to reconnect every abb_reconnect_delay ns. */
+  if (ABB_STATE_DISCONNECTED == abb_state) {
+    uint64_t n = rx_hrtime();
+    if (n > abb_reconnect_timeout) {
+      if (0 != connect()) {
+        RX_ERROR("After being disconnected we couldn't reconnect");
+      }
+      abb_reconnect_timeout = n + abb_reconnect_delay;
+    }
+    return 0;
+  }
+
+
   if (0 != sock.isConnected()) {
     RX_ERROR("We're not connected to the ABB.");
     return -1;
   }
-
+  
   /* Check if there is data on the socket. */
   if (0 == sock.canRead(0, 100)) {
     int nread = sock.read(read_buffer, sizeof(read_buffer));
@@ -449,6 +469,26 @@ int KankerAbb::processIncomingData() {
     sendCheckState();
   }
   return 0;
+}
+
+void KankerAbb::onSocketConnected() {
+  RX_VERBOSE("Socket connected");
+  
+  abb_state = ABB_STATE_CONNECTED;
+
+  if (NULL != abb_listener) {
+    abb_listener->onAbbConnected();
+  }
+}
+
+void KankerAbb::onSocketDisconnected() {
+  RX_ERROR("Disconnected from ABB");
+
+  abb_state = ABB_STATE_DISCONNECTED;
+
+  if (NULL != abb_listener) {
+    abb_listener->onAbbDisconnected();
+  }
 }
 
 int KankerAbb::sendCheckState() {

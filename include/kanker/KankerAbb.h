@@ -39,6 +39,8 @@ using namespace rapidxml;
 #define ABB_STATE_UNKNOWN -1
 #define ABB_STATE_READY 1
 #define ABB_STATE_DRAWING 2
+#define ABB_STATE_DISCONNECTED 3         /* We're disconnected and we'll automatically try to reconnect */ 
+#define ABB_STATE_CONNECTED 4            /* We're connected with the ABB. */
 
 /* ---------------------------------------------------------------------- */
 
@@ -56,13 +58,15 @@ class KankerAbbGlyph {
 
 class KankerAbbListener {
  public:
-  virtual void onAbbReadyToDraw() {}
-  virtual void onAbbDrawing() {}
+  virtual void onAbbReadyToDraw() {}                                                 /* Gets called when the ABB is ready to receive new drawing commands. */
+  virtual void onAbbDrawing() {}                                                     /* Gets called whenever the ABB starts drawing. */
+  virtual void onAbbConnected() {}                                                   /* Gets called when we're connected to the abb. */
+  virtual void onAbbDisconnected() {}                                                /* Gets called when the socket connection with the ABB is lost. The KankerAbb object will try to reconnect so you don't have to call handle reconnecting yourself. */
 };
 
 /* ---------------------------------------------------------------------- */
 
-class KankerAbb {
+class KankerAbb : public SocketListener {
 
  public:
   KankerAbb();
@@ -88,7 +92,8 @@ class KankerAbb {
   int sendResetPacketIndex();
   int sendCheckState();
   int sendDraw();
-
+  void onSocketConnected();
+  void onSocketDisconnected();
   /* --- END: TEST WITH SOCKET --- */
 
  public:
@@ -106,6 +111,8 @@ class KankerAbb {
   char read_buffer[1024];
   uint64_t check_abb_state_timeout;
   uint64_t check_abb_state_delay;
+  uint64_t abb_reconnect_timeout;
+  uint64_t abb_reconnect_delay;
   uint8_t abb_state;
   KankerAbbListener* abb_listener;
 };

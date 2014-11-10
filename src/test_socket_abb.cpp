@@ -23,6 +23,8 @@ static void sighandler(int s);
 class AbbListener : public KankerAbbListener {
 public:
   AbbListener(KankerAbb* abb);
+  void onAbbConnected();
+  void onAbbDisconnected();
   void onAbbReadyToDraw();
   void onAbbDrawing();
 public:
@@ -72,14 +74,14 @@ int main() {
   /* TEST ABB WRAPPER */
   KankerAbb abb;
   AbbListener abb_listener(&abb);
-  
-  if (0 != abb.connect()) {
-    RX_ERROR("Failed to connect");
+ 
+ if (0 != abb.setAbbListener(&abb_listener)) {
+    RX_ERROR("Failed to set the abb listener.");
     exit(1);
   }
-
-  if (0 != abb.setAbbListener(&abb_listener)) {
-    RX_ERROR("Failed to set the abb listener.");
+ 
+  if (0 != abb.connect()) {
+    RX_ERROR("Failed to connect");
     exit(1);
   }
 
@@ -160,6 +162,9 @@ AbbListener::AbbListener(KankerAbb* abb)
 }
 
 void AbbListener::onAbbReadyToDraw() {
+
+  static uint64_t counter = 0;
+
   RX_VERBOSE("The ABB is ready to draw, change..");
 
   if (NULL == abb) {
@@ -168,11 +173,31 @@ void AbbListener::onAbbReadyToDraw() {
   }
 
   std::vector<vec3> positions;
-  positions.push_back(vec3(0, -680, -300));
-  positions.push_back(vec3(0, 680, -300));
-  positions.push_back(vec3(0, 680, 220));
-  positions.push_back(vec3(0, -680, 220));
-  positions.push_back(vec3(0, -680, -300));
+  int draw_mode = counter % 3;
+  if (0 == draw_mode) {
+    positions.push_back(vec3(0, -680, -300));
+    positions.push_back(vec3(0, 680, -300));
+    positions.push_back(vec3(0, 680, 220));
+    positions.push_back(vec3(0, -680, 220));
+    positions.push_back(vec3(0, -680, -300));
+  }
+  else if (1 == draw_mode) {
+    positions.push_back(vec3(0, -680, 0));
+    positions.push_back(vec3(0, 680, 0));
+    positions.push_back(vec3(0, 0, 0));
+  }
+  else if (2 == draw_mode) {
+    positions.push_back(vec3(0, 0, 0));
+    positions.push_back(vec3(0, 0, -300));
+    positions.push_back(vec3(0, 0, 0));
+    positions.push_back(vec3(0, 0, -300));
+    positions.push_back(vec3(0, 0, 0));
+    positions.push_back(vec3(0, 0, -300));
+    positions.push_back(vec3(0, 0, 0));
+  }
+  else {
+    RX_VERBOSE("Unhandled draw mode: %d", draw_mode);
+  }
 
   for (size_t i = 0; i < positions.size(); ++i) {
     vec3& v = positions[i];
@@ -181,8 +206,18 @@ void AbbListener::onAbbReadyToDraw() {
   }
   RX_VERBOSE("Sending draw");
   abb->sendDraw();
+
+  counter++;
 }
 
 void AbbListener::onAbbDrawing() {
   RX_VERBOSE("Abb is drawing....");
+}
+
+void AbbListener::onAbbConnected() {
+  RX_VERBOSE("Connected with Abb");
+}
+
+void AbbListener::onAbbDisconnected() {
+  RX_VERBOSE("Got disconnected from ...");
 }

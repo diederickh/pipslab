@@ -41,6 +41,14 @@ int socket_get_error();                                                      /* 
 
 /* ------------------------------------------------------------------------- */
 
+class SocketListener {
+ public:
+  virtual void onSocketConnected() {}                                        /* Gets called when the socket is connected. */
+  virtual void onSocketDisconnected() {}                                     /* Gets called when the socket is disconnected. */   
+};
+
+/* ------------------------------------------------------------------------- */
+
 class Socket {
  public:
   Socket();
@@ -54,12 +62,26 @@ class Socket {
   int read(char* buffer, int nbytes);                                         /* Read bytes into the given buffer of `nbytes` size. */
   int canRead(int sec, int usec);                                             /* Check if there is data available on the socket but timeout after `sec` and/or `usec` */ 
   int isConnected();                                                          /* Returns `0` when the socket is connected to the remote host. */
+
+  int setListener(SocketListener* listener);
                                                                               
  public:                                                                      
   SOCKET_HANDLE handle;                                                       /* Reference to the OS specific socket handle, e.g. int on Posix and SOCKET on windows. */
+  SocketListener* listener;
 }; 
 
 /* ------------------------------------------------------------------------- */
+
+inline int Socket::setListener(SocketListener* lis) {
+
+  if (NULL == lis) {
+    return -1;
+  }
+
+  listener = lis;
+
+  return 0;
+}
 
 inline int Socket::isConnected() {
   return (handle >= 0) ? 0 : -1;
