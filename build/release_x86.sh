@@ -62,7 +62,7 @@ cmake \
 cmake --build . --target install --config Release
 
 cd ./../../install/${triplet}/bin/
-#./kankerfont
-# ./kankerabb
+./kankerfont
+#./kankerabb
 #./test_socket
-./test_socket_abb
+#./test_socket_abb

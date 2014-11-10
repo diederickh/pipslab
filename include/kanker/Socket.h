@@ -53,7 +53,7 @@ class Socket {
  public:
   Socket();
   ~Socket();
-  int connect(std::string host, uint16_t port);                               /* Connect to the HOST and PORT. */  
+  int connect(std::string host, uint16_t port);                               /* Connect to the HOST and PORT. Make sure to set the listener before calling init() if you want to handle disconnect events. */  
   int close();                                                                /* Close the socket when it's created. */
   int send(const char* data, int nbytes);                                     /* Send the given data. */                          
   int send(const std::string& data);                                          /* Send the given string. */

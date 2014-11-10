@@ -23,13 +23,18 @@ KankerAbb::KankerAbb()
   ,char_scale(15.0f)
   ,word_spacing(40.0f)
   ,line_height(35.0f)
+  ,min_x(0)
+  ,max_x(0)
+  ,min_y(0)
+  ,max_y(0)
 
   ,check_abb_state_timeout(0)
   ,check_abb_state_delay(10e9)
   ,abb_reconnect_timeout(0)
-  ,abb_reconnect_delay(5e9)
-  ,abb_state(ABB_STATE_UNKNOWN)
+  ,abb_reconnect_delay(2e9)
+  ,abb_state(ABB_STATE_DISCONNECTED)
   ,abb_listener(NULL)
+
 {
   memset(read_buffer, 0x00, sizeof(read_buffer));
 }
@@ -316,15 +321,21 @@ int KankerAbb::saveSettings(std::string filepath) {
   }
   
   ofs << "<config>" << std::endl
-     << "  <offset_x>" << offset_x << "</offset_x>" << std::endl
-     << "  <offset_y>" << offset_y << "</offset_y>" << std::endl 
-     << "  <range_width>" << range_width << "</range_width>" << std::endl
-     << "  <range_height>" << range_height << "</range_height>" << std::endl
-     << "  <char_scale>" << char_scale << "</char_scale>" << std::endl
-     << "  <word_spacing>" << word_spacing << "</word_spacing>" << std::endl
-     << "  <line_height>" << line_height << "</line_height>" << std::endl
-     << "  <ftp_url>" << ftp_url << "</ftp_url>" << std::endl
-     << "</config>";
+      << "  <offset_x>" << offset_x << "</offset_x>" << std::endl
+      << "  <offset_y>" << offset_y << "</offset_y>" << std::endl 
+      << "  <range_width>" << range_width << "</range_width>" << std::endl
+      << "  <range_height>" << range_height << "</range_height>" << std::endl
+      << "  <char_scale>" << char_scale << "</char_scale>" << std::endl
+      << "  <word_spacing>" << word_spacing << "</word_spacing>" << std::endl
+      << "  <line_height>" << line_height << "</line_height>" << std::endl
+      << "  <ftp_url>" << ftp_url << "</ftp_url>" << std::endl
+      << "  <abb_host>" << abb_host << "</abb_host>" << std::endl
+      << "  <abb_port>" << abb_port << "</abb_port>" << std::endl
+      << "  <min_x>" << min_x << "</min_x>" << std::endl
+      << "  <max_x>" << max_x << "</max_x>" << std::endl
+      << "  <min_y>" << min_y << "</min_y>" << std::endl
+      << "  <max_y>" << max_y << "</max_y>" << std::endl
+      << "</config>";
 
   ofs.close();
   
@@ -367,6 +378,12 @@ int KankerAbb::loadSettings(std::string filepath) {
     read_xml<float>(cfg, "word_spacing", 40.0f, word_spacing);
     read_xml<float>(cfg, "line_height", 35.0f, line_height);
     read_xml<std::string>(cfg, "ftp_url", "", ftp_url);
+    read_xml<int>(cfg, "abb_port", 1025, abb_port);
+    read_xml<std::string>(cfg, "abb_host", "127.0.0.1", abb_host);
+    read_xml<int>(cfg, "min_x", 0, min_x);
+    read_xml<int>(cfg, "max_x", 0, max_x);
+    read_xml<int>(cfg, "min_y", 0, min_y);
+    read_xml<int>(cfg, "max_y", 0, max_y);
 
     print();
   }
@@ -387,20 +404,26 @@ void KankerAbb::print() {
   RX_VERBOSE("abb.word_spacing: %f", word_spacing);
   RX_VERBOSE("abb.line_height: %f", line_height);
   RX_VERBOSE("abb.ftp_url: %s", ftp_url.c_str());
+  RX_VERBOSE("abb.abb_host: %s", abb_host.c_str());
+  RX_VERBOSE("abb.abb_port: %u", abb_port);
+  RX_VERBOSE("abb.min_x: %d", min_x);
+  RX_VERBOSE("abb.max_x: %d", max_x);
+  RX_VERBOSE("abb.min_y: %d", min_y);
+  RX_VERBOSE("abb.max_y: %d", max_y);
 }
 
 /* ---------------------------------------------------------------------- */
 
 int KankerAbb::connect() {
 
-  if (0 != sock.connect("127.0.0.1", 1025)) {
-    RX_ERROR("Couldn't connect to the ABB");
-    return -1;
-  }
-
   if (0 != sock.setListener(this)) {
     RX_ERROR("Couldn't set the socket listener.");
     return -2;
+  }
+
+  if (0 != sock.connect("127.0.0.1", 1025)) {
+    RX_ERROR("Couldn't connect to the ABB");
+    return -1;
   }
 
   return 0;
@@ -419,7 +442,6 @@ int KankerAbb::processIncomingData() {
     }
     return 0;
   }
-
 
   if (0 != sock.isConnected()) {
     RX_ERROR("We're not connected to the ABB.");
@@ -458,16 +480,21 @@ int KankerAbb::processIncomingData() {
       }
     }
   }
-  else {                                        
-  }
 
   /* Do we need to update our state? */
+  /* 
+     @todo when we didn't receive any data after X-calls it could be that 
+     the robot stopped executing its instructions and it should be reset.
+     This can happen when the robot is turned off manually or some other
+     unhandled situation occurs. 
+  */
   uint64_t n = rx_hrtime();
   if (n > check_abb_state_timeout) {
     RX_VERBOSE("Check state.");
     check_abb_state_timeout = n + check_abb_state_delay;
     sendCheckState();
   }
+
   return 0;
 }
 
@@ -501,10 +528,11 @@ int KankerAbb::sendTestData() {
   return 0;
 }
 
+/* Give coordinates in GL coordinates, x = horizontal axis, y vertical axis */
 int KankerAbb::sendPosition(float x, float y, float z) {
   buffer.clear();
   buffer.writeU8(ABB_CMD_POSITION);
-  buffer.writePosition(z, x, y); /* We flip the coordinates. */
+  buffer.writePosition(z, x, y);
   sock.send(buffer.ptr(), buffer.size());
   return 0;
 }
@@ -521,6 +549,119 @@ int KankerAbb::sendDraw() {
   buffer.writeU8(ABB_CMD_DRAW);
   sock.send(buffer.ptr(), buffer.size());
   return 0;
+}
+
+int KankerAbb::sendTestPositions() {
+  std::vector<vec3> positions;
+
+  /* move in max area */
+  positions.push_back(vec3(0, 0, 0));
+  positions.push_back(vec3(min_x, min_y, 0));
+  positions.push_back(vec3(max_x, min_y, 0));
+  positions.push_back(vec3(max_x, max_y, 0));
+  positions.push_back(vec3(min_x, max_y, 0));
+  positions.push_back(vec3(min_x, min_y, 0));
+
+  /* from left to right */
+  positions.push_back(vec3(min_x, 0, 0));
+  positions.push_back(vec3(max_x, 0, 0));
+  positions.push_back(vec3(0, 0, 0));
+
+  /* bow */
+  positions.push_back(vec3(0, 0, 0));
+  positions.push_back(vec3(0, min_y,0));
+  positions.push_back(vec3(0, 0, 0));
+  positions.push_back(vec3(0, min_y, 0));
+  positions.push_back(vec3(0, 0, 0));
+  positions.push_back(vec3(0, min_y, 0));
+  positions.push_back(vec3(0, 0, 0));
+  positions.push_back(vec3(min_x, min_y, 0));
+
+  buffer.clear();
+  for (size_t i = 0; i < positions.size(); ++i) {
+    vec3& v = positions[i];
+    checkAbbPosition(v);
+    buffer.writeU8(ABB_CMD_POSITION);
+    buffer.writeFloat(v.z); /* depth */
+    buffer.writeFloat(v.x); /* left right */
+    buffer.writeFloat(v.y); /* up/down */
+
+    //sendPosition(v.x, v.y, v.z);
+    //RX_VERBOSE("Sending: x: %f, y: %f, z: %f", v.x, v.y, v.z);
+  }
+
+  buffer.writeU8(ABB_CMD_DRAW);
+  RX_VERBOSE("Sending test, with %lu bytes.", buffer.size());
+  sock.send(buffer.ptr(), buffer.size());
+
+  //sendDraw();
+
+  return 0;
+}
+
+int KankerAbb::sendText(std::vector<KankerAbbGlyph>& message) {
+
+  RX_VERBOSE("Requested a sendText()");
+
+  if (0 == message.size()) {
+    RX_ERROR("Trying to send an empty text. Message vector size if 0.");
+    return -1;
+  }
+
+  int max_buf_size = 500;
+
+  buffer.clear();
+
+  for (size_t i = 0; i < message.size(); ++i) {
+    
+    /* get the segments that make up the glyph. */
+    std::vector<std::vector<vec3> >& segments = message[i].segments;
+
+    for (size_t j = 0; j < segments.size(); ++j) {
+      std::vector<vec3>& points = segments[j];
+      RX_VERBOSE("Got %lu points in segment: %lu", points.size(), j);
+      for (size_t k = 0; k < points.size(); ++k) {
+        vec3& v = points[k];
+        checkAbbPosition(v);
+        buffer.writeU8(ABB_CMD_POSITION);
+        buffer.writePosition(v.z, v.x, -1 * v.y);
+        RX_VERBOSE("Position: %f, %f, %f", -1 * v.x, v.y, v.z);
+
+        if (buffer.size() > max_buf_size) {
+          RX_VERBOSE("Sending %lu bytes to Abb.", buffer.size());
+          sock.send(buffer.ptr(), buffer.size());
+          buffer.clear();
+          SLEEP_MILLIS(50);
+        }
+      }
+    }
+  }
+
+  if (0 != buffer.size()) {
+    sock.send(buffer.ptr(), buffer.size());
+    buffer.clear();
+  }
+
+  sendDraw();
+  /*
+  if (0 == buffer.size()) {
+    RX_ERROR("Asked to write some text but we didn't find any points.");
+    return -2;
+  }
+  */
+
+  return 0;
+}
+
+void KankerAbb::checkAbbPosition(vec3& v) {
+
+  if (0 != v.z) {
+    RX_VERBOSE("Currently we're using a fixed depth value of 0.");
+  }
+  
+  v.x = CLAMP(v.x, min_x, max_x);
+  v.y = CLAMP(v.y, min_y, max_y);
+  v.z = 0.0; /* for now we make sure that the 'depth' is the same. */
 }
 
 /* ---------------------------------------------------------------------- */

@@ -49,13 +49,15 @@ int Socket::connect(std::string host, uint16_t port) {
   struct addrinfo* result, *rp, hints;
 
   if (-1 != handle) {
-    RX_ERROR("Already connected, call close()");
+    RX_ERROR("Already connected, call close(), handle is: %d", handle);
     return -1;
   }
+
   if (0 == host.size()) {
     RX_ERROR("Invalid host (empty)");
     return -2;
   }
+
   if (0 == port) {
     RX_ERROR("Invald port: 0.");
     return -3;
@@ -83,6 +85,7 @@ int Socket::connect(std::string host, uint16_t port) {
   }
 
   /* Iterate over the found addresses and create socket. Use first one that works. */
+  r = -99;
   for (rp = result; rp != NULL; rp = rp->ai_next) {
     handle = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
     if (handle < 0) {
@@ -93,11 +96,14 @@ int Socket::connect(std::string host, uint16_t port) {
     if (0 == r) {
       break;
     }
-#if defined(_WIN32)
-    closesocket(handle);
-#else
-    ::close(handle);
-#endif
+  }
+
+  /* When we arrive here and r == -99 we're not connected. */
+  if (0 != r) {
+    close();
+    freeaddrinfo(result);
+    RX_ERROR("Could not find host %s:%u. Cleanly reset the socket handle. handle is: %d", host.c_str(), port, handle);
+    return -5;
   }
 
   freeaddrinfo(result);
@@ -106,7 +112,6 @@ int Socket::connect(std::string host, uint16_t port) {
   if (NULL == rp) {
     RX_ERROR("Could not connect to %s:%u", host.c_str(), port);
     close();
-    RX_ERROR("closed....");
     return -5;
   }
 
@@ -280,7 +285,7 @@ int Socket::close() {
 
         err = socket_get_error();
 
-        switch(result) {
+        switch(err) {
           case WSANOTINITIALISED: {
             RX_ERROR("Socket not initialized.");
             return 0;
@@ -290,7 +295,7 @@ int Socket::close() {
             return 0;
           }
           case WSAENOTSOCK: {
-            RX_ERROR("The `sock` member is not a real socket. This is not supposed to happen.");
+            RX_ERROR("The `sock` member is not a real socket. This is not supposed to happen but occurs when connect() fails.");
             return 0;
           }
           case WSAEINPROGRESS: {

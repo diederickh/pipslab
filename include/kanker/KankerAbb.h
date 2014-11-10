@@ -83,12 +83,16 @@ class KankerAbb : public SocketListener {
   int loadSettings(std::string filepath);                                            /* Load the current state of the font. */ 
   void print();                                                                      /* Prints some information about the object. */
 
+  void checkAbbPosition(vec3& v); /* This makes sure that the input position can be used by the robot. */
+
   /* --- BEGIN: TEST WITH SOCKET --- */
   int setAbbListener(KankerAbbListener* lis);
-  int connect();                               /* Connects to the robot. */
-  int processIncomingData();                   /* Checks if there is any data from the ABB */
-  int sendTestData();                          /* Send some test coordinates to the robot. */
+  int connect();                                      /* Connects to the robot. */
+  int processIncomingData();                          /* Checks if there is any data from the ABB */
+  int sendTestData();                                 /* Send some test coordinates to the robot. */
   int sendPosition(float x, float y, float z);
+  int sendText(std::vector<KankerAbbGlyph>& glyphs);  /* Send a complete text to the Abb. */ 
+  int sendTestPositions();                            /* Sends some test positions. */
   int sendResetPacketIndex();
   int sendCheckState();
   int sendDraw();
@@ -104,7 +108,13 @@ class KankerAbb : public SocketListener {
   float char_scale;     /* how to scale the characters. */
   float word_spacing;   /* how many mm between words? */ 
   float line_height;    /* mm per line. */
+  int min_x;
+  int max_x;
+  int min_y;
+  int max_y;
   std::string ftp_url;  /* used by the controller; it would be cleaner to store this in the controller; */
+  std::string abb_host; 
+  int abb_port; 
 
   Socket sock;          /* 2nd version where we communicate over a socket. */
   Buffer buffer;        /* 2nd version, buffer that we use to pack data. */

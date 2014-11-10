@@ -45,10 +45,12 @@ int KankerAbbController::init(KankerAbbControllerSettings cfg,
     return -5;
   }
 
+#if 0
   if (0 == kanker_abb.ftp_url.size()) {
     RX_ERROR("Not ftp_url found in the settings file. Make sure to add <ftp_url>ftp://username:password@upload.host.com/</ftp_url> to the settings.");
     return -6;
   }
+#endif
 
   if (0 != kanker_font.load(cfg.font_file)) {
     return -7;
@@ -57,6 +59,10 @@ int KankerAbbController::init(KankerAbbControllerSettings cfg,
   if (NULL == lis) {
     RX_ERROR("No listener passed into the controller. We need this.");
     return -8;
+  }
+
+  if (0 != kanker_abb.connect()) {
+    RX_VERBOSE("Failed to connect to the ABB. We will retry in update().");
   }
 
   listener = lis;
@@ -92,6 +98,13 @@ int KankerAbbController::writeText(int64_t id, std::string text) {
     return -3;
   }
 
+  if(0 != kanker_abb.sendText(abb_glyphs)) {
+    RX_ERROR("Failed to send text.");
+    return -4;
+  }
+#if 0
+
+  /* Update: we're currently testing a solution w/o FTP. */
   std::string mod_filepath = rx_to_data_path("mTEXT.mod");
 
   if (0 != kanker_abb.saveAbbModule(mod_filepath, id, abb_glyphs)) {
@@ -103,7 +116,7 @@ int KankerAbbController::writeText(int64_t id, std::string text) {
     RX_ERROR("Failed to upload the module file. See verbose output in console.");
     return -5;
   }
-
+#endif
 
   /* We're writing to the ABB */
   switchState(KC_STATE_WRITING);
@@ -114,6 +127,7 @@ int KankerAbbController::writeText(int64_t id, std::string text) {
 void KankerAbbController::update() {
 
   /* When we're writing check if the ABB is ready by checking the state. */
+#if 0
   if (KC_STATE_WRITING == state) {
     uint64_t n = rx_hrtime();
     if (n >= poll_timeout) {
@@ -123,6 +137,9 @@ void KankerAbbController::update() {
       poll_timeout = n + poll_delay;
     }
   }
+#endif
+
+  kanker_abb.processIncomingData();
 }
 
 int KankerAbbController::checkAbbState() {

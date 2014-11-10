@@ -6,6 +6,8 @@
 static void on_add_characters_clicked(int id, void* user);
 static void on_font_test_clicked(int id, void* user);
 static void on_save_clicked(int id, void* user);
+static void on_simplify_clicked(int id, void* user);
+static void on_send_test_clicked(int id, void* user);
 static void on_file_selected(int selectid, int optionid, void* user);
 static void on_load_clicked(int id, void* user);
 static void on_abb_save_clicked(int id, void* user);
@@ -76,6 +78,8 @@ int KankerApp::init() {
   gui_home = new Container(new RenderGL());
   gui_home->add(new Button("Add characters",  0, GUI_ICON_FONT, on_add_characters_clicked, this,  GUI_CORNER_ALL | GUI_OUTLINE)).setPosition(painter.width() - 228, 31).setWidth(200);
   gui_home->add(new Button("Test font",  0, GUI_ICON_FONT, on_font_test_clicked, this,  GUI_CORNER_ALL | GUI_OUTLINE)).setPosition(painter.width() - 228, 60).setWidth(200);
+  gui_home->add(new Button("Simplify glyph",  0, GUI_ICON_FONT, on_simplify_clicked, this,  GUI_CORNER_ALL | GUI_OUTLINE)).setPosition(painter.width() - 228, 200).setWidth(200);
+  gui_home->add(new Button("Send test",  0, GUI_ICON_FONT, on_send_test_clicked, this,  GUI_CORNER_ALL | GUI_OUTLINE)).setPosition(painter.width() - 228, 230).setWidth(200);
   gui_home->add(new Text("Filename", font_filename, 135)).setPosition(painter.width() - 227, painter.height() - 105).setWidth(200);
   gui_home->add(new Button("Save",  0, GUI_ICON_FLOPPY_O, on_save_clicked, this,  GUI_CORNER_ALL | GUI_OUTLINE)).setPosition(painter.width() - 228, painter.height() - 80).setWidth(200);
 
@@ -96,11 +100,17 @@ int KankerApp::init() {
   gui_abb->add(new Slider<float>("ABB.word_spacing", kanker_abb.word_spacing, 0, 1000, 1));
   gui_abb->add(new Slider<float>("ABB.range_width (mm)", kanker_abb.range_width, 0, 1500, 1));
   gui_abb->add(new Slider<float>("ABB.range_height (mm)", kanker_abb.range_height, 0, 1500, 1));
+  gui_abb->add(new Slider<int>("ABB.min_x", kanker_abb.min_x, -15000, 15000, 1));
+  gui_abb->add(new Slider<int>("ABB.max_x", kanker_abb.max_x, -15000, 15000, 1));
+  gui_abb->add(new Slider<int>("ABB.min_y", kanker_abb.min_y, -15000, 15000, 1));
+  gui_abb->add(new Slider<int>("ABB.max_y", kanker_abb.max_y, -15000, 15000, 1));
   gui_abb->add(new Text("ABB.ftp_url", kanker_abb.ftp_url, 400));
+  gui_abb->add(new Text("ABB.host", kanker_abb.abb_host, 400));
+  gui_abb->add(new Slider<int>("ABB.port", kanker_abb.abb_port, 0, 999999, 1));
   gui_abb->add(new Button("Save", 0, GUI_ICON_FLOPPY_O, on_abb_save_clicked, this));
   gui_abb->add(new Button("Load", 0, GUI_ICON_REFRESH, on_abb_load_clicked, this));
   gui_abb->add(new Button("Send to ABB", 0, GUI_ICON_UPLOAD, on_abb_test_upload_clicked, this));
-  gui_abb->setPosition(10, 500);
+  gui_abb->setPosition(10, 350);
 
   /* init the drawer. */
   if (0 != tiny_drawer.init(1024, 768, painter.width(), painter.height())) {
@@ -137,7 +147,8 @@ int KankerApp::init() {
 
   test_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
   test_message = "diederick";
-  // test_message = "x";
+  test_message = "aaaaaa";
+  //test_message = "x";
   /* Force a load for the settings. */
   on_abb_load_clicked(0, this);
 
@@ -158,6 +169,36 @@ int KankerApp::getFontFiles(std::vector<std::string>& files) {
   }
 
   return 0;
+}
+
+void KankerApp::update() {
+
+#if 0
+  float offset_x;       /* used to position all glyphs with a offset. */
+  float offset_y;       /* used to position all glyphs with a offset. */
+  float range_width;    /* range in milimeters */
+  float range_height;   /* range in milimeters */
+  float char_scale;     /* how to scale the characters. */
+  float word_spacing;   /* how many mm between words? */ 
+  float line_height;    /* mm per line. */
+  int min_x;
+  int max_x;
+  int min_y;
+  int max_y;
+#endif
+
+  /* @tmp -> this must be done neater! */
+  controller.kanker_abb.offset_x = kanker_abb.offset_x;
+  controller.kanker_abb.offset_y = kanker_abb.offset_y;
+  controller.kanker_abb.range_width = kanker_abb.range_width;
+  controller.kanker_abb.range_height = kanker_abb.range_height;
+  controller.kanker_abb.line_height = kanker_abb.line_height;
+  controller.kanker_abb.char_scale = kanker_abb.char_scale;
+  controller.kanker_abb.min_x = kanker_abb.min_x;
+  controller.kanker_abb.max_x = kanker_abb.max_x;
+  controller.kanker_abb.min_y = kanker_abb.min_y;
+  controller.kanker_abb.max_y = kanker_abb.max_y;
+  controller.update();
 }
 
 void KankerApp::draw() {
@@ -772,6 +813,83 @@ static void on_abb_test_upload_clicked(int id, void* user) {
     RX_ERROR("Failed to write the text to the ABB.");
     return;
   }
+}
+
+static void on_send_test_clicked(int id, void* user) {
+
+  KankerApp* app = static_cast<KankerApp*>(user);
+  if (NULL == app) {
+    RX_ERROR("Failed to cast to kankerApp");
+    return;
+  }
+  
+  app->controller.kanker_abb.sendTestPositions();
+}
+
+static void on_simplify_clicked(int id, void* user) {
+
+  KankerApp* app = static_cast<KankerApp*>(user);
+  if (NULL == app) {
+    RX_ERROR("Failed to cast to kankerApp");
+    return;
+  }
+
+  if (NULL == app->kanker_glyph) {
+    RX_ERROR("Glyph is NULL cannot simplify");
+    return;
+  }
+
+  /* Points closer then `min_dist` pixels are removed */
+  float min_dist = 35;
+  float min_dist_sq = min_dist * min_dist;
+  float dist_sq;
+  int to_big = 0;
+  size_t total= 0;
+
+  std::vector<std::vector<vec3> > new_segments;
+
+  KankerGlyph& g = *app->kanker_glyph;
+  for (size_t i = 0; i < g.segments.size(); ++i) {
+
+    std::vector<vec3>& points = g.segments[i];
+    if (0 == points.size()) {
+      continue;
+    } 
+
+    std::vector<vec3> new_points;
+    size_t read_dx = 1;
+    vec3& point_from = points[0];
+
+    new_points.push_back(point_from);
+    dist_sq = 0;
+
+    //RX_VERBOSE("OLD.segment.size(): %lu", points.size());
+
+    while (dist_sq < min_dist_sq && read_dx < points.size()) {
+
+      vec3& a = points[read_dx];
+      vec3 d = point_from - a;
+      dist_sq = dot(d, d);
+
+      if (dist_sq >= min_dist_sq) {
+        point_from = points[read_dx];
+        new_points.push_back(point_from);
+        dist_sq = 0;
+      }
+
+      read_dx++;
+    }
+
+    //RX_VERBOSE("NEW.segments.size(): %lu", new_points.size());
+
+    if (new_points.size() > 1) {
+      new_segments.push_back(new_points);
+    }
+
+  }
+
+  g.segments.clear();
+  g.segments = new_segments;
 }
 
 /* ------------------------------------------------------------------------------------ */

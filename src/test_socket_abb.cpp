@@ -30,48 +30,17 @@ public:
 public:
   KankerAbb* abb;
 };
+
 /* ---------------------------------------------------------------------- */
 
 int main() {
 
   signal(SIGINT, sighandler);
-
   rx_log_init();
+  socket_init();
 
   RX_VERBOSE("Socket ABB Test");
   
-  socket_init();
-
-#if USE_RAW_TEST
-
-  Socket sock;
-
-  if (0 != sock.connect("127.0.0.1", 1025)) {
-    RX_ERROR("Cannot connect.");
-    exit(1);
-  }
-
-  /* TEST RAW DATA */
-  Buffer buffer;
-  buffer.writePosition(0, -680, -300);
-  buffer.writePosition(0, 680, -300);
-  buffer.writePosition(0, 680, 220);
-  buffer.writePosition(0, -680, 220);
-  buffer.writePosition(0, -680, -300);
-
-  RX_VERBOSE("Buffer contains: %lu bytes.", buffer.size());
-
-  int num = 0;
-  while (true) { 
-    RX_VERBOSE("Running num: %d, sending: %d bytes", num, buffer.size());
-    sock.send(buffer.ptr(), buffer.size());
-    SLEEP_MILLIS(4000);
-    ++num;
-  }
-#endif
-
-#if USE_ABB_TEST
-  /* TEST ABB WRAPPER */
   KankerAbb abb;
   AbbListener abb_listener(&abb);
  
@@ -81,68 +50,14 @@ int main() {
   }
  
   if (0 != abb.connect()) {
-    RX_ERROR("Failed to connect");
-    exit(1);
+    RX_ERROR("Failed to connect. KankerAbb will try to reconnect when calling processIncomingData.");
   }
 
-  std::vector<vec3> positions;
-  positions.push_back(vec3(0, -680, -300));
-  positions.push_back(vec3(0, 680, -300));
-  positions.push_back(vec3(0, 680, 220));
-  positions.push_back(vec3(0, -680, 220));
-  positions.push_back(vec3(0, -680, -300));
+  RX_VERBOSE("Starting socket loop");
 
-  SLEEP_MILLIS(1000);
-
-
-  char read_buffer[1024] = { 0 } ;
-  bool can_draw = true;
-  int num = 0;
   while (true) { 
-    //    RX_VERBOSE("Running num: %d", num);
     abb.processIncomingData();
-
-    //SLEEP_MILLIS(100);
-#if 0    
-    if (can_draw) {
-      for (size_t i = 0; i < positions.size(); ++i) {
-        vec3& v = positions[i];
-        abb.sendPosition(v.y, v.z, v.x);
-        RX_VERBOSE("Sending: x: %f, y: %f, z: %f", v.x, v.y, v.z);
-      }
-      RX_VERBOSE("Sending draw");
-      abb.sendDraw();
-    }
-
-    SLEEP_MILLIS(15000);
-    
-    /* Check if there is data on the socket. */
-    if (0 == abb.sock.canRead(1, 0)) {
-      RX_VERBOSE("There is some data on the socket.");
-      int nread = abb.sock.read(read_buffer, sizeof(read_buffer));
-      if (0 > nread) {
-        RX_ERROR("Failed to read data from socket: %d", nread);
-      }
-      else {
-        RX_VERBOSE("Read some data: %d, %c", nread, read_buffer[0]);
-      }
-    }
-    
-#endif
-#if 0
-    vec3& v = positions[num % positions.size()];
-    abb.sendPosition(v.y, v.z, v.x);
-    RX_VERBOSE("Sending: x: %f, y: %f, z: %f", v.x, v.y, v.z);
-    SLEEP_MILLIS(50000);
-#endif
-    //RX_VERBOSE("Sending DRAW");
-    //abb.sendDraw();
-    //abb.sendResetPacketIndex();
-    //abb.sendPosition(-680, -300, num);
-   
-    ++num;
   }
-#endif
 
   socket_shutdown();
 
@@ -153,7 +68,6 @@ static void sighandler(int s) {
   RX_VERBOSE("Got signal.");
   must_run = false;
 }
-
 
 /* ---------------------------------------------------------------------- */
 AbbListener::AbbListener(KankerAbb* abb) 
@@ -180,6 +94,8 @@ void AbbListener::onAbbReadyToDraw() {
     positions.push_back(vec3(0, 680, 220));
     positions.push_back(vec3(0, -680, 220));
     positions.push_back(vec3(0, -680, -300));
+
+
   }
   else if (1 == draw_mode) {
     positions.push_back(vec3(0, -680, 0));
@@ -199,9 +115,31 @@ void AbbListener::onAbbReadyToDraw() {
     RX_VERBOSE("Unhandled draw mode: %d", draw_mode);
   }
 
+#if 0  
+  positions.clear();
+  positions.push_back(vec3(0, -680, -300));
+  positions.push_back(vec3(0, 680, -300));
+  positions.push_back(vec3(0, 680, 220));
+  positions.push_back(vec3(0, -680, 220));
+  positions.push_back(vec3(0, -680, -300));
+
+  positions.push_back(vec3(0, -680, 0));
+  positions.push_back(vec3(0, 680, 0));
+  positions.push_back(vec3(0, 0, 0));
+
+  positions.push_back(vec3(0, 0, 0));
+  positions.push_back(vec3(0, 0, -300));
+  positions.push_back(vec3(0, 0, 0));
+  positions.push_back(vec3(0, 0, -300));
+  positions.push_back(vec3(0, 0, 0));
+  positions.push_back(vec3(0, 0, -300));
+  positions.push_back(vec3(0, 0, 0));
+#endif
+
   for (size_t i = 0; i < positions.size(); ++i) {
     vec3& v = positions[i];
     abb->sendPosition(v.y, v.z, v.x);
+    //abb->sendPosition(v.x, v.y, v.z);
     RX_VERBOSE("Sending: x: %f, y: %f, z: %f", v.x, v.y, v.z);
   }
   RX_VERBOSE("Sending draw");
