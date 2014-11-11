@@ -18,8 +18,6 @@ KankerAbbGlyph::~KankerAbbGlyph() {
 KankerAbb::KankerAbb() 
   :offset_x(0.0f)
   ,offset_y(0.0f)
-  ,range_width(500.0f)
-  ,range_height(500.0f)
   ,char_scale(15.0f)
   ,word_spacing(40.0f)
   ,line_height(35.0f)
@@ -28,20 +26,22 @@ KankerAbb::KankerAbb()
   ,min_y(0)
   ,max_y(0)
   ,min_point_dist(3.0)
-
   ,check_abb_state_timeout(0)
   ,check_abb_state_delay(10e9)
   ,abb_reconnect_timeout(0)
-  ,abb_reconnect_delay(2e9)
+  ,abb_reconnect_delay(10e9)
   ,abb_state(ABB_STATE_DISCONNECTED)
   ,abb_listener(NULL)
   ,curr_glyph_index(0)
-
 {
   memset(read_buffer, 0x00, sizeof(read_buffer));
 }
 
 KankerAbb::~KankerAbb() {
+
+  if (0 == sock.isConnected()) {
+    sock.close();
+  }
 }
 
 int KankerAbb::write(KankerFont& font,
@@ -55,12 +55,12 @@ int KankerAbb::write(KankerFont& font,
   float pen_x = 0;
   float pen_y = 0;
   float word_width = 0;
-  float width_available = range_width;
-  float height_available = range_height;
+  float width_available = getRangeWidth();
+  float height_available = getRangeHeight();
   float x_height = 0.0f;
 
-  if (0.0f == range_width) { RX_ERROR("Range width not yet set, call init() first.");  return -1;  }
-  if (0.0f == range_height) { RX_ERROR("Range height not yet set, call init() first.");  return -2;  }
+  if (0.0f == width_available) { RX_ERROR("Range width not yet set, call init() first.");  return -1;  }
+  if (0.0f == height_available) { RX_ERROR("Range height not yet set, call init() first.");  return -2;  }
   if (0 == str.size()) { RX_ERROR("Trying to write to ABB but the given text size is 0.");  return -3;  }
 
   if (0 != result.size()) {
@@ -88,7 +88,7 @@ int KankerAbb::write(KankerFont& font,
       has_newline = true;
       pen_x = 0;
       pen_y += line_height;
-      width_available = range_width - word_width;
+      width_available = getRangeWidth() - word_width;
     }
 
     /* Generate vertices for this word. */
@@ -108,6 +108,7 @@ int KankerAbb::write(KankerFont& font,
       abb_glyph.glyph.scale(char_scale);
       abb_glyph.glyph.translate(pen_x + offset_x, pen_y + offset_y);
 
+      /* Copy the simplified version into our abb_glyph copy before adding it to the result. */
       for (size_t k = 0; k < abb_glyph.glyph.segments.size(); ++k) {
 
         std::vector<vec3> simplified_segment = simplify(abb_glyph.glyph.segments[k], min_point_dist);
@@ -121,18 +122,6 @@ int KankerAbb::write(KankerFont& font,
       }
 
       result.push_back(abb_glyph);
-#if 0
-      std::copy(abb_glyph.glyph.segments.begin(),
-                abb_glyph.glyph.segments.end(), 
-                std::back_inserter(abb_glyph.segments));
-
-      result.push_back(abb_glyph);
-
-      std::copy(abb_glyph.glyph.segments.begin(),
-                abb_glyph.glyph.segments.end(), 
-                std::back_inserter(segmentsOut));
-#endif
-     
       pen_x += abb_glyph.glyph.advance_x;
     }
 
@@ -141,7 +130,7 @@ int KankerAbb::write(KankerFont& font,
       has_newline = true;
       pen_x = 0;
       pen_y += line_height;
-      width_available = range_width;
+      width_available = getRangeWidth();
     }
     else {
       pen_x += word_spacing;
@@ -194,132 +183,6 @@ std::vector<vec3> KankerAbb::simplify(std::vector<vec3>& points, float minDist) 
   }
 
   return new_points;
-}
-
-int KankerAbb::saveAbbModule(std::string filepath, int64_t id, std::vector<KankerAbbGlyph>& message) {
-
-  if (0 == filepath.size()) {
-    RX_ERROR("Cannot save, invalid filepath.");
-    return -1;
-  }
-
-  if (0 == message.size()) {
-    RX_ERROR("The message size is 0.");
-    return -2;
-  }
-
-  std::ofstream ofs(filepath.c_str());
-  if (false == ofs.is_open()) {
-    RX_ERROR("Failed to open %s for writing.", filepath.c_str());
-    return -3;
-  }
-
-  /* 
-     How many floats do we store? 
-
-     - Each glyph can contain multiple line segments so we loop 
-       over each line segment and count the number of points per 
-       segment. 
-
-     - For every glyph we need to add 2 extra points. The first one 
-       is at the start of a segment which indicates that the I/O
-       port needs to be turned ON and after each segment another 
-       one to turn the I/O port OFF. 
-
-  */
-
-  std::vector<std::string> rapid_points;
-
-  for (size_t i = 0; i < message.size(); ++i) {
-
-    /* get the segments that make up the glyph. */
-    std::vector<std::vector<vec3> >& segments = message[i].segments;
-    
-    for (size_t j = 0; j < segments.size(); ++j) {
-
-      std::vector<vec3>& points = segments[j];
-
-      for (size_t k = 0; k < points.size(); ++k) {
-
-        vec3& point = points[k];
-        //point *= 5;
-        //point.y += 650;
-        point.z = 660;
-        //point.x += 0;
-        point.print();
-
-        if (k == 0) {
-          /* start of segment. */
-          std::stringstream ss; 
-          std::string point_str; 
-          //          ss << "[" << point.x <<"," << point.y << "," << point.z << ",0]";
-          ss << "[" << (point.z) <<"," << point.x << "," << point.y << ",0]\n";
-          point_str = ss.str();
-          rapid_points.push_back(point_str);
-        }
-        
-        /* point */
-        std::stringstream ss; 
-        std::string point_str; 
-        //        ss << "[" << point.x <<"," << point.y << "," << point.z << ",1]";
-        ss << "[" << ( point.z) <<"," << point.x << "," << point.y << ",1]\n";
-        point_str = ss.str();
-        rapid_points.push_back(point_str);
-
-        if (k == points.size() - 1) {
-          /* end of segment. */
-          std::stringstream ss; 
-          std::string point_str; 
-          //          ss << "[" << point.x <<"," << point.y << "," << point.z << ",0]";
-          ss << "[" << ( point.z) <<"," << point.x << "," << point.y << ",0]\n";
-          point_str = ss.str();
-          rapid_points.push_back(point_str);
-        }
-      }
-    }
-  } /* for message */
-
-  ofs << "MODULE mTEXT" << std::endl << std::endl;
-
-  /* Write the Glyph record. */
-  //  << "PERS Bool bNewModule := TRUE;" << std::endl
-  ofs << "PERS num nMessageId := " << id << ";" << std::endl
-      << "PERS num nTotalPoints := " << rapid_points.size() << ";" << std::endl
-      << std::endl;
-  
-  /* Write one huge array with all the points. */
-  ofs << "PERS num nXYZ_Value{" << rapid_points.size() << ",4} := [";
-  for (size_t i = 0; i < rapid_points.size(); ++i) {
-    ofs << rapid_points[i];
-    if (i < rapid_points.size() - 1) {
-      ofs << ",";
-    }
-  }
-
-  ofs << "];";
-
-  /* Write the procedure */
-  ofs << std::endl 
-      << std::endl;
-
-  ofs << "PROC Calculate()" << std::endl
-      << "  nTotalPoints_Robot := nTotalPoints;" << std::endl
-      << "  FOR i from 1 to nTotalPoints DO" << std::endl
-      << "      nXYZ_Value_Robot{i, 1} := nXYZ_Value{i,1};" << std::endl
-      << "      nXYZ_Value_Robot{i, 2} := nXYZ_Value{i,2};" << std::endl
-      << "      nXYZ_Value_Robot{i, 3} := nXYZ_Value{i,3};" << std::endl
-      << "      nXYZ_Value_Robot{i, 4} := nXYZ_Value{i,4};" << std::endl
-      << "  ENDFOR" << std::endl
-    //      << "  nXYZ_Value_Robot{" << rapid_points.size() << ",4} := nXYZ_Value{" << rapid_points.size() << ",4};" << std::endl
-    //      << "  bNewModule := FALSE; " << std::endl
-      << "  nMessageId_Robot := nMessageId;" << std::endl
-      << "ENDPROC" << std::endl
-      << std::endl
-      << "ENDMODULE";
-
-  ofs.close();
-
-  return 0;
 }
 
 float KankerAbb::getWordWidth(KankerFont& font, std::string word) {
@@ -375,12 +238,9 @@ int KankerAbb::saveSettings(std::string filepath) {
   ofs << "<config>" << std::endl
       << "  <offset_x>" << offset_x << "</offset_x>" << std::endl
       << "  <offset_y>" << offset_y << "</offset_y>" << std::endl 
-      << "  <range_width>" << range_width << "</range_width>" << std::endl
-      << "  <range_height>" << range_height << "</range_height>" << std::endl
       << "  <char_scale>" << char_scale << "</char_scale>" << std::endl
       << "  <word_spacing>" << word_spacing << "</word_spacing>" << std::endl
       << "  <line_height>" << line_height << "</line_height>" << std::endl
-      << "  <ftp_url>" << ftp_url << "</ftp_url>" << std::endl
       << "  <abb_host>" << abb_host << "</abb_host>" << std::endl
       << "  <abb_port>" << abb_port << "</abb_port>" << std::endl
       << "  <min_x>" << min_x << "</min_x>" << std::endl
@@ -424,12 +284,9 @@ int KankerAbb::loadSettings(std::string filepath) {
     xml_node<>* cfg = doc.first_node("config");
     read_xml<float>(cfg, "offset_x", 0, offset_x);
     read_xml<float>(cfg, "offset_y", 0, offset_y);
-    read_xml<float>(cfg, "range_width", 500, range_width);
-    read_xml<float>(cfg, "range_height", 500, range_height);
     read_xml<float>(cfg, "char_scale", 15.0f, char_scale);
     read_xml<float>(cfg, "word_spacing", 40.0f, word_spacing);
     read_xml<float>(cfg, "line_height", 35.0f, line_height);
-    read_xml<std::string>(cfg, "ftp_url", "", ftp_url);
     read_xml<int>(cfg, "abb_port", 1025, abb_port);
     read_xml<std::string>(cfg, "abb_host", "127.0.0.1", abb_host);
     read_xml<int>(cfg, "min_x", 0, min_x);
@@ -450,12 +307,11 @@ void KankerAbb::print() {
 
   RX_VERBOSE("abb.offset_x: %f", offset_x);
   RX_VERBOSE("abb.offset_y: %f", offset_y);
-  RX_VERBOSE("abb.range_width: %f", range_width);
-  RX_VERBOSE("abb.range_height: %f", range_height);
+  RX_VERBOSE("abb.range width: %f", getRangeWidth());
+  RX_VERBOSE("abb.range height: %f", getRangeHeight());
   RX_VERBOSE("abb.char_scale: %f", char_scale);
   RX_VERBOSE("abb.word_spacing: %f", word_spacing);
   RX_VERBOSE("abb.line_height: %f", line_height);
-  RX_VERBOSE("abb.ftp_url: %s", ftp_url.c_str());
   RX_VERBOSE("abb.abb_host: %s", abb_host.c_str());
   RX_VERBOSE("abb.abb_port: %u", abb_port);
   RX_VERBOSE("abb.min_x: %d", min_x);
@@ -466,18 +322,24 @@ void KankerAbb::print() {
 
 /* ---------------------------------------------------------------------- */
 
-void KankerAbb::update() {
-  
-}
-
 int KankerAbb::connect() {
+
+  if (0 == abb_host.size()) {
+    RX_ERROR("Cannot connect to abb because the `abb_host` member is not set.");
+    return -1;
+  }
+
+  if (0 == abb_port) {
+    RX_ERROR("Cannot connect to abb because the `abb_port` is not set.");
+    return -2;
+  }
 
   if (0 != sock.setListener(this)) {
     RX_ERROR("Couldn't set the socket listener.");
     return -2;
   }
 
-  if (0 != sock.connect("127.0.0.1", 1025)) {
+  if (0 != sock.connect(abb_host, abb_port)) {
     RX_ERROR("Couldn't connect to the ABB");
     return -1;
   }
@@ -485,7 +347,7 @@ int KankerAbb::connect() {
   return 0;
 }
 
-int KankerAbb::processIncomingData() {
+int KankerAbb::update() {
 
   /* When disconnected we try to reconnect every abb_reconnect_delay ns. */
   if (ABB_STATE_DISCONNECTED == abb_state) {
@@ -506,26 +368,32 @@ int KankerAbb::processIncomingData() {
   
   /* Check if there is data on the socket. */
   if (0 == sock.canRead(0, 100)) {
+
     int nread = sock.read(read_buffer, sizeof(read_buffer));
+
     if (0 > nread) {
       RX_ERROR("Got an error while trying to read from socket, we're probably disconnected: %d", nread);
       return -2;
     }
     else if (0 < nread) {
+
       RX_VERBOSE("Read: %d bytes, %c", nread, read_buffer[0]);
 
       /* r = ready to accept new commands, c = client is connected, waiting for commands. */
       if ('r' == read_buffer[0]) { 
         if (ABB_STATE_READY != abb_state) {
-          RX_VERBOSE("Abb is ready to start drawing!");
+
+          RX_VERBOSE("Abb is ready to start drawing the next glyph.");
+
           if (NULL != abb_listener) {
-            //abb_listener->onAbbReadyToDraw();
+            abb_listener->onAbbReadyToDraw();
           }
           else {
             RX_VERBOSE("We're checking the Abb state but you haven't set a listener so it doesn't really make sense.");
           }
+
           abb_state = ABB_STATE_READY;
-          
+
           sendNextGlyph();
         }
       }
@@ -548,7 +416,6 @@ int KankerAbb::processIncomingData() {
   */
   uint64_t n = rx_hrtime();
   if (n > check_abb_state_timeout) {
-    RX_VERBOSE("Check state.");
     check_abb_state_timeout = n + check_abb_state_delay;
     sendCheckState();
   }
@@ -557,6 +424,7 @@ int KankerAbb::processIncomingData() {
 }
 
 void KankerAbb::onSocketConnected() {
+
   RX_VERBOSE("Socket connected");
   
   abb_state = ABB_STATE_CONNECTED;
@@ -567,6 +435,7 @@ void KankerAbb::onSocketConnected() {
 }
 
 void KankerAbb::onSocketDisconnected() {
+
   RX_ERROR("Disconnected from ABB");
 
   abb_state = ABB_STATE_DISCONNECTED;
@@ -582,35 +451,11 @@ int KankerAbb::sendCheckState() {
   sock.send(buffer.ptr(), buffer.size());
   return 0;
 }
-int KankerAbb::sendTestData() {
-  return 0;
-}
-
-/* Give coordinates in GL coordinates, x = horizontal axis, y vertical axis */
-int KankerAbb::sendPosition(float x, float y, float z) {
-  buffer.clear();
-  buffer.writeU8(ABB_CMD_POSITION);
-  buffer.writePosition(z, x, y);
-  sock.send(buffer.ptr(), buffer.size());
-  return 0;
-}
-
-int KankerAbb::sendResetPacketIndex() {
-  buffer.clear();
-  buffer.writeU8(ABB_CMD_RESET_PACKET_INDEX);
-  sock.send(buffer.ptr(), buffer.size());
-  return 0;
-}
-
-int KankerAbb::sendDraw() {
-  buffer.clear();
-  buffer.writeU8(ABB_CMD_DRAW);
-  sock.send(buffer.ptr(), buffer.size());
-  return 0;
-}
 
 int KankerAbb::sendTestPositions() {
+
   std::vector<vec3> positions;
+  std::vector<std::vector<vec3> >segments;
 
   /* move in max area */
   positions.push_back(vec3(0, 0, 0));
@@ -620,10 +465,16 @@ int KankerAbb::sendTestPositions() {
   positions.push_back(vec3(min_x, max_y, 0));
   positions.push_back(vec3(min_x, min_y, 0));
 
+  segments.push_back(positions);
+  positions.clear();
+
   /* from left to right */
   positions.push_back(vec3(min_x, 0, 0));
   positions.push_back(vec3(max_x, 0, 0));
   positions.push_back(vec3(0, 0, 0));
+
+  segments.push_back(positions);
+  positions.clear();
 
   /* bow */
   positions.push_back(vec3(0, 0, 0));
@@ -635,24 +486,40 @@ int KankerAbb::sendTestPositions() {
   positions.push_back(vec3(0, 0, 0));
   positions.push_back(vec3(min_x, min_y, 0));
 
-  buffer.clear();
-  for (size_t i = 0; i < positions.size(); ++i) {
-    vec3& v = positions[i];
-    vec3 p = convertFontPointToAbbPoint(v); 
-    buffer.writeU8(ABB_CMD_POSITION);
-    buffer.writeFloat(v.z); /* depth */
-    buffer.writeFloat(v.x); /* left right */
-    buffer.writeFloat(v.y); /* up/down */
+  segments.push_back(positions);
+  positions.clear();
 
-    //sendPosition(v.x, v.y, v.z);
-    //RX_VERBOSE("Sending: x: %f, y: %f, z: %f", v.x, v.y, v.z);
+  buffer.clear();
+
+  for (size_t i = 0; i < segments.size(); ++i) {
+    positions = segments[i];
+
+    /* Power on a I/O */
+    buffer.writeU8(ABB_CMD_IO);
+    buffer.writeFloat(0);
+    buffer.writeFloat(1);
+
+    for (size_t j = 0; j < positions.size(); ++j) {
+      vec3& v = positions[j];
+      buffer.writeU8(ABB_CMD_POSITION);
+
+      /* We dont need to convert the positions because the 
+         coordinates we use -are- in ABB space */
+      buffer.writeFloat(v.z); /* depth */
+      buffer.writeFloat(v.x); /* left right */
+      buffer.writeFloat(v.y); /* up/down */
+    }
+
+    /* Power off an I/O */
+    buffer.writeU8(ABB_CMD_IO);
+    buffer.writeFloat(0);
+    buffer.writeFloat(1);
   }
 
   buffer.writeU8(ABB_CMD_DRAW);
+
   RX_VERBOSE("Sending test, with %lu bytes.", buffer.size());
   sock.send(buffer.ptr(), buffer.size());
-
-  //sendDraw();
 
   return 0;
 }
@@ -662,7 +529,9 @@ int KankerAbb::sendNextGlyph() {
   buffer.clear();
 
   if (curr_glyph_index >= curr_message.size()) {
-    RX_VERBOSE("READY WITH SENDING MESSAGE");
+    if (NULL != abb_listener) {
+      abb_listener->onAbbMessageReady();
+    }
     return 0;
   }
 
@@ -685,8 +554,6 @@ int KankerAbb::sendNextGlyph() {
     buffer.writeU8(ABB_CMD_IO);
     buffer.writeFloat(0);
     buffer.writeFloat(1);
-
-    RX_VERBOSE("Got %lu points in segment: %lu", points.size(), j);
 
     for (size_t k = 0; k < points.size(); ++k) {
       vec3& v = points[k];
@@ -718,14 +585,18 @@ int KankerAbb::sendNextGlyph() {
   }
 
   buffer.writeU8(ABB_CMD_DRAW);
-  sock.send(buffer.ptr(), buffer.size());
-
+    sock.send(buffer.ptr(), buffer.size());
   buffer.clear();
 
   curr_glyph_index++;
-
 }
 
+/*
+  We send each glyph one at a time and only after receiving 
+   a ABB_STATE_READY from the ABB. After calling `sendText()` 
+   you need to make sure to call `update()` often because that 
+   will process the complete message. 
+*/
 int KankerAbb::sendText(std::vector<KankerAbbGlyph>& message) {
 
   RX_VERBOSE("Requested a sendText()");
@@ -739,50 +610,6 @@ int KankerAbb::sendText(std::vector<KankerAbbGlyph>& message) {
   curr_message = message;
 
   sendNextGlyph();
-
-#if 0
-  int max_buf_size = 500;
-
-  buffer.clear();
-
-  for (size_t i = 0; i < message.size(); ++i) {
-    
-    /* get the segments that make up the glyph. */
-    std::vector<std::vector<vec3> >& segments = message[i].segments;
-
-    for (size_t j = 0; j < segments.size(); ++j) {
-      std::vector<vec3>& points = segments[j];
-      RX_VERBOSE("Got %lu points in segment: %lu", points.size(), j);
-      for (size_t k = 0; k < points.size(); ++k) {
-        vec3& v = points[k];
-        checkAbbPosition(v);
-        buffer.writeU8(ABB_CMD_POSITION);
-        buffer.writePosition(v.z, v.x, -1 * v.y);
-        RX_VERBOSE("Position: %f, %f, %f", -1 * v.x, v.y, v.z);
-
-        if (buffer.size() > max_buf_size) {
-          RX_VERBOSE("Sending %lu bytes to Abb.", buffer.size());
-          sock.send(buffer.ptr(), buffer.size());
-          buffer.clear();
-          SLEEP_MILLIS(50);
-        }
-      }
-    }
-  }
-
-  if (0 != buffer.size()) {
-    sock.send(buffer.ptr(), buffer.size());
-    buffer.clear();
-  }
-
-  sendDraw();
-  /*
-  if (0 == buffer.size()) {
-    RX_ERROR("Asked to write some text but we didn't find any points.");
-    return -2;
-  }
-  */
-#endif
 
   return 0;
 }
@@ -804,7 +631,7 @@ vec3 KankerAbb::convertFontPointToAbbPoint(vec3& v) {
 
   x = min_x + px * range_x;
   y = max_y - (py * range_y);
-
+  
   /* clamp x/y  */
   if (x < min_x) {
     x = min_x;

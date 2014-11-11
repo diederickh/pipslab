@@ -62,7 +62,7 @@ int main() {
   RX_VERBOSE("Starting socket loop");
 
   while (true) { 
-    abb.processIncomingData();
+    abb.update();
   }
 
   socket_shutdown();
@@ -103,8 +103,6 @@ void AbbListener::onAbbReadyToDraw() {
     positions.push_back(vec3(680, 220, 0));
     positions.push_back(vec3(-680, 220, 0));
     positions.push_back(vec3(-680, -300, 0));
-
-
   }
   else if (1 == draw_mode) {
     positions.push_back(vec3(-680, 0, 0));
@@ -124,14 +122,24 @@ void AbbListener::onAbbReadyToDraw() {
     RX_VERBOSE("Unhandled draw mode: %d", draw_mode);
   }
 
-  for (size_t i = 0; i < positions.size(); ++i) {
-    vec3& v = positions[i];
-    abb->sendPosition(v.y, v.z, v.x);
-    //abb->sendPosition(v.x, v.y, v.z);
-    RX_VERBOSE("Sending: x: %f, y: %f, z: %f", v.x, v.y, v.z);
+  {
+    /* Fill buffer with positions and send */
+    abb->buffer.clear();
+
+    for (size_t i = 0; i < positions.size(); ++i) {
+      vec3& v = positions[i];
+      vec3 p = abb->convertFontPointToAbbPoint(v);
+      abb->buffer.writeU8(ABB_CMD_POSITION);
+      abb->buffer.writeFloat(p.x);
+      abb->buffer.writeFloat(p.y);
+      abb->buffer.writeFloat(p.z);
+      RX_VERBOSE("Sending: x: %f, y: %f, z: %f", v.x, v.y, v.z);
+    }
+
+    abb->buffer.writeU8(ABB_CMD_DRAW);
+    abb->sock.send(abb->buffer.ptr(), abb->buffer.size());
+    abb->buffer.clear();
   }
-  RX_VERBOSE("Sending draw");
-  abb->sendDraw();
 
   counter++;
 }
