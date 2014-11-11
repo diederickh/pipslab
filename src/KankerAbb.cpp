@@ -808,14 +808,10 @@ vec3 KankerAbb::convertFontPointToAbbPoint(vec3& v) {
   float range_y = max_y - min_y;
   float px = (v.x / range_x);
   float py = (v.y / range_y);
-  
-  //RX_VERBOSE("range_x: %f, range_y: %f", range_x, range_y);
 
   x = min_x + px * range_x;
   y = (max_y-line_height) + line_height - (py * range_y);
-  //  y = min_y + line_height - (py * range_y);
-  
-  //y = range_y - (min_y + ((py * range_y)));
+  y = max_y - (py * range_y);
   
   /*
   x = v.x;
