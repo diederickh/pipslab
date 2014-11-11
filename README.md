@@ -29,3 +29,9 @@ $ cd fontapp
 $ cd build
 $ ./release_x86.sh
 ````
+
+## Todo
+
+````sh
+- Socket::send(), when sending fails we exit(), need to handle this.
+````

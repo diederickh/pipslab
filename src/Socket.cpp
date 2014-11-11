@@ -150,9 +150,19 @@ int Socket::send(const char* data, int nbytes) {
 #endif
 
     if (done != nbytes) {
+
       /* @todo implement the situation where we couldn't send all bytes. */
       RX_ERROR("Failed to send all bytes, this is a situation we need to handle correctly. We sent: %d, but should: %lu.", done, nbytes);
-      exit(1);
+
+      err = socket_get_error();
+      if (0 == socket_is_recoverable_error(err)) {
+        RX_ERROR("The error is recoverable.");
+        return -4;
+      }
+      else {
+        close();
+        return -5;
+      }
     }
 
     if (done < 0) {

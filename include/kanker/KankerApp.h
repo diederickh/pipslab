@@ -45,8 +45,11 @@ class KankerApp : public KankerAbbControllerListener {
   int init();
   void update();
   void draw();
+
+  /* App specific. */
   void switchState(int newstate);
   int getFontFiles(std::vector<std::string>& result);
+  int createGui();                                                            /* Creates all the gui elements for the gui we draw on the right side.*/
 
   /* Key and mouse interaction */
   void onChar(unsigned int key);
@@ -89,9 +92,8 @@ class KankerApp : public KankerAbbControllerListener {
   std::string test_message;                                                     /* Text that we use to upload to the ABB. */
 
   bool is_mouse_pressed;                                                        /* Is set to true when the user pressed the mouse */
-  Container* gui_home;                                                          /* The gui container. */
-  Group* gui_abb;
   int gui_width;                                                                /* The width of the gui, used to position some graphical elements */ 
+  Panel* gui;
   std::string font_filename;                                                    /* The last set or loaded file name. */
   int selected_font_dx;                                                         /* Used when loading a font. */
   int64_t glyph_dx;                                                             /* Used when showing a loaded font.  Points to a glyph index. */
