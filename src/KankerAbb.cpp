@@ -247,6 +247,7 @@ int KankerAbb::saveSettings(std::string filepath) {
       << "  <max_x>" << max_x << "</max_x>" << std::endl
       << "  <min_y>" << min_y << "</min_y>" << std::endl
       << "  <max_y>" << max_y << "</max_y>" << std::endl
+      << "  <min_point_dist>" << min_point_dist << "</min_point_dist>" << std::endl
       << "</config>";
 
   ofs.close();
@@ -293,6 +294,7 @@ int KankerAbb::loadSettings(std::string filepath) {
     read_xml<int>(cfg, "max_x", 0, max_x);
     read_xml<int>(cfg, "min_y", 0, min_y);
     read_xml<int>(cfg, "max_y", 0, max_y);
+    read_xml<float>(cfg, "min_point_dist", 0, min_point_dist);
 
     print();
   }
@@ -528,6 +530,19 @@ int KankerAbb::sendTestPositions() {
 int KankerAbb::sendSwipePositions() {
 
   buffer.clear();
+  
+  if (0 != addSwipeToBuffer()) {
+    RX_VERBOSE("Error: failed to add the swipe to the buffer");
+    return -1;
+  }
+
+  RX_VERBOSE("Sending test, with %lu bytes.", buffer.size());
+  sock.send(buffer.ptr(), buffer.size());
+  
+  return 0;
+}
+
+int KankerAbb::addSwipeToBuffer() {
 
   std::vector<vec3> positions;
   int num_points = 10;
@@ -536,20 +551,51 @@ int KankerAbb::sendSwipePositions() {
   float angle_step = TWO_PI / num_points;
   float perc = 0.0f;
 
+
+  buffer.writeU8(ABB_CMD_POSITION);
+  buffer.writePosition(0, min_x, min_y);
+
+  buffer.writeU8(ABB_CMD_IO);
+  buffer.writeFloat(1);
+  buffer.writeFloat(1);
+
+  #if 0
   for (int i = 0; i < num_points; ++i) {
     perc = float(i) / (num_points-1);
     angle += angle_step;
-    vec3 v(min_x + perc * getRangeWidth(), cos(angle) * radius, sin(angle) * radius);
+    vec3 v(min_x + perc * getRangeWidth(), min_y + (cos(angle) * getRangeHeight() * 0.5), sin(angle) * radius);
     buffer.writeU8(ABB_CMD_POSITION);
     buffer.writePosition(v.z, v.x, v.y);
   }
+  #endif
 
-  buffer.writeU8(ABB_CMD_DRAW);
 
-  RX_VERBOSE("Sending test, with %lu bytes.", buffer.size());
-  sock.send(buffer.ptr(), buffer.size());
-  
-  return 0;
+  /* move in max area */
+
+  positions.push_back(vec3(min_x, min_y, 0));
+  positions.push_back(vec3(max_x, min_y, 0));
+  positions.push_back(vec3(max_x, max_y, 0));
+  positions.push_back(vec3(min_x, max_y, 0));
+  positions.push_back(vec3(min_x, min_y, 0));
+
+  for (size_t j = 0; j < positions.size(); ++j) {
+    vec3& v = positions[j];
+    buffer.writeU8(ABB_CMD_POSITION);
+
+    /* We dont need to convert the positions because the 
+       coordinates we use -are- in ABB space */
+    buffer.writeFloat(v.z); /* depth */
+    buffer.writeFloat(v.x); /* left right */
+    buffer.writeFloat(v.y); /* up/down */
+    buffer.writeFloat(0.0f); /* z-rotation */
+  }
+
+
+  //  buffer.writeU8(ABB_CMD_DRAW);
+
+  buffer.writeU8(ABB_CMD_IO);
+  buffer.writeFloat(1);
+  buffer.writeFloat(0);
 }
 
 int KankerAbb::sendNextGlyph() {
@@ -619,9 +665,15 @@ int KankerAbb::sendNextGlyph() {
     buffer.clear();
   }
 
+
+  if ((curr_glyph_index+1) >= curr_message.size()) {
+    addSwipeToBuffer();
+  }
+
   buffer.writeU8(ABB_CMD_DRAW);
     sock.send(buffer.ptr(), buffer.size());
   buffer.clear();
+
 
   curr_glyph_index++;
 }

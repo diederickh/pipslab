@@ -6,9 +6,11 @@ extern_dir=""
 is_mac=n
 is_linux=n
 is_win=n
+of=of_v0.8.4_vs_release
+ofappdir=${d}/../${of}/apps/kankerfonds/abb
 
-#export architecture="i386"
-export architecture="x86_64"
+architecture="i386"
+#export architecture="x86_64"
 
 if [ ! -d build.release ] ; then 
     mkdir build.release
@@ -25,6 +27,36 @@ elif [ "$(expr substr $(uname -s) 1 10)" = "MINGW32_NT" ]; then
     is_win=y
     triplet="win-vs2012-${architecture}"
 fi
+
+
+if [ "${is_win}" = "y" ] ; then 
+    if [ ! -d ${d}/../${of} ] ; then
+        cd ${d}/../
+        #curl -o of.zip http://www.openframeworks.cc/versions/v0.8.4/of_v0.8.4_osx_release.zip
+        curl -o of.zip http://www.openframeworks.cc/versions/v0.8.4/of_v0.8.4_vs_release.zip
+        cd ${d}/../
+        unzip ./of.zip
+    fi
+
+    if [ ! -d ${ofappdir} ] ; then
+        mkdir -p ${ofappdir}
+    fi
+
+    if [ ! -d ${d}/../${of}/apps/kankerfonds ] ; then 
+        cd ${d}/../src/
+        echo "cmd /c mklink /J of .\..\\${of}\apps\kankerfonds\abb" > tmp.bat
+        ./tmp.bat
+    fi
+fi
+
+
+#if of_v0.8.4_osx_release
+#cmd  /c 'mklink link target'
+
+#cd ${d}/../
+#unzip ${d}/../of.zip
+#ls -alh  ${d}/../of.zip
+#exit
 
 extern_path=${d}/../extern/${triplet}
 install_path=${d}/../install/${triplet}
@@ -45,6 +77,7 @@ if [ ! -d ${extern_path} ] ; then
         ./dependencies/build_win_dependencies.sh
     fi
 fi
+
 
 # Compile the library.
 cd build.release

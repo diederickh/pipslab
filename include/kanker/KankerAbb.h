@@ -97,6 +97,7 @@ class KankerAbb : public SocketListener {
   int sendCheckState();                                                              /* Sends the check state command to the Abb; used to get the state but also to detect if the abb is offline. */
   int sendTestPositions();                                                           /* Sends some test positions that shows you the range in which the ABB is moving. */  
   int sendSwipePositions();                                                          /* After writing a text message we want to generate an awesome swipe in the background. This function generates this swipe. */ 
+  int addSwipeToBuffer();                                                            /* Fills the buffer with the swipe data. */
   void onSocketConnected();                                                          /* Gets called by the `sock` member when we're connected with the Abb. */
   void onSocketDisconnected();                                                       /* Gets called by the `sock` member when we get disconnected. */   
 

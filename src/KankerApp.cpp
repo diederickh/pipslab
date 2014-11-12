@@ -110,12 +110,15 @@ int KankerApp::init() {
   }
 
   test_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
+  test_message = "roger abb";
+  //test_message = "ik sta op tegen kanker";
+  //test_message = "i love ";
   //test_message = "diederick";
   //test_message = "d d d a a";
   //test_message = "aaaaaa";
   //test_message = "bbbbbb";
   //test_message = "x";
-  //test_message = "d";
+  test_message = "a";
 
   /* Force a load for the settings. */
   on_abb_load_settings_clicked(0, this);
@@ -191,7 +194,7 @@ int KankerApp::createGui() {
   group_abb->add(new Slider<int>("ABB.max_x", kanker_abb.max_x, -15000, 15000, 1, GUI_STYLE_NONE));
   group_abb->add(new Slider<int>("ABB.min_y", kanker_abb.min_y, -15000, 15000, 1, GUI_STYLE_NONE));
   group_abb->add(new Slider<int>("ABB.max_y", kanker_abb.max_y, -15000, 15000, 1, GUI_STYLE_NONE));
-  group_abb->add(new Slider<float>("ABB.min_point_dist", kanker_abb.min_point_dist, 1.0, 5.0, 0.5, GUI_STYLE_NONE));
+  group_abb->add(new Slider<float>("ABB.min_point_dist", kanker_abb.min_point_dist, 1.0, 50.0, 0.5, GUI_STYLE_NONE));
   group_abb->add(new Text("ABB.host", kanker_abb.abb_host));
   group_abb->add(new Slider<int>("ABB.port", kanker_abb.abb_port, 0, 999999, 1, GUI_STYLE_NONE));
   group_abb->add(new Button("Save ABB Settings", 0, GUI_ICON_FLOPPY_O, on_abb_save_settings_clicked, this, GUI_STYLE_NONE));

@@ -26,6 +26,8 @@ set(lib_headers
   ${bd}/include/kanker/KankerAbbController.h
   ${bd}/include/kanker/KankerFont.h
   ${bd}/include/kanker/KankerGlyph.h
+  ${bd}/include/kanker/Socket.h
+  ${bd}/include/kanker/Buffer.h
   )
 
 set(app_sources

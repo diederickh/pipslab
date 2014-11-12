@@ -1,0 +1,14 @@
+<config>
+  <offset_x>8</offset_x>
+  <offset_y>-167</offset_y>
+  <char_scale>64</char_scale>
+  <word_spacing>40</word_spacing>
+  <line_height>77</line_height>
+  <abb_host>192.168.1.100</abb_host>
+  <abb_port>1025</abb_port>
+  <min_x>-680</min_x>
+  <max_x>680</max_x>
+  <min_y>-300</min_y>
+  <max_y>200</max_y>
+  <min_point_dist>11.5</min_point_dist>
+</config>
