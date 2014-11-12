@@ -508,6 +508,7 @@ int KankerAbb::sendTestPositions() {
       buffer.writeFloat(v.z); /* depth */
       buffer.writeFloat(v.x); /* left right */
       buffer.writeFloat(v.y); /* up/down */
+      buffer.writeFloat(0.0f); /* z-rotation */
     }
 
     /* Power off an I/O */
@@ -521,6 +522,33 @@ int KankerAbb::sendTestPositions() {
   RX_VERBOSE("Sending test, with %lu bytes.", buffer.size());
   sock.send(buffer.ptr(), buffer.size());
 
+  return 0;
+}
+
+int KankerAbb::sendSwipePositions() {
+
+  buffer.clear();
+
+  std::vector<vec3> positions;
+  int num_points = 10;
+  float radius = 30.0f;
+  float angle = 0.0f;
+  float angle_step = TWO_PI / num_points;
+  float perc = 0.0f;
+
+  for (int i = 0; i < num_points; ++i) {
+    perc = float(i) / (num_points-1);
+    angle += angle_step;
+    vec3 v(min_x + perc * getRangeWidth(), cos(angle) * radius, sin(angle) * radius);
+    buffer.writeU8(ABB_CMD_POSITION);
+    buffer.writePosition(v.z, v.x, v.y);
+  }
+
+  buffer.writeU8(ABB_CMD_DRAW);
+
+  RX_VERBOSE("Sending test, with %lu bytes.", buffer.size());
+  sock.send(buffer.ptr(), buffer.size());
+  
   return 0;
 }
 
@@ -550,16 +578,23 @@ int KankerAbb::sendNextGlyph() {
       continue;
     }
 
-    /* Power on the I/O port 0 */
-    buffer.writeU8(ABB_CMD_IO);
-    buffer.writeFloat(0);
-    buffer.writeFloat(1);
 
     for (size_t k = 0; k < points.size(); ++k) {
+      
       vec3& v = points[k];
       vec3 p = convertFontPointToAbbPoint(v);
       buffer.writeU8(ABB_CMD_POSITION);
       buffer.writePosition(p.x, p.y, p.z);
+
+      if (0 == k) {
+        /* Power on the I/O port 0 */
+        buffer.writeU8(ABB_CMD_IO);
+        buffer.writeFloat(0);
+        buffer.writeFloat(1);
+
+        buffer.writeU8(ABB_CMD_POSITION);
+        buffer.writePosition(p.x, p.y, p.z);
+      }
     }
 
     /* Power off the I/O port 0 */
@@ -626,7 +661,7 @@ vec3 KankerAbb::convertFontPointToAbbPoint(vec3& v) {
   float py = (v.y / range_y);
 
   if (0 != v.z) {
-    RX_VERBOSE("Currently we're using a fixed depth value of 0.");
+    // RX_VERBOSE("Currently we're using a fixed depth value of 0.");
   }
 
   x = min_x + px * range_x;

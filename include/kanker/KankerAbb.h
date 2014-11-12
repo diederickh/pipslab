@@ -94,8 +94,9 @@ class KankerAbb : public SocketListener {
   int setAbbListener(KankerAbbListener* lis);                                        /* Set the listener which will receive events from this object. */
   int sendText(std::vector<KankerAbbGlyph>& glyphs);                                 /* Send a complete text to the Abb. Make sure to call `update()` often because we send each glyph one at a time. */ 
   int sendNextGlyph();                                                               /* Is called internally when writing a message. This is called by `update()` when you issues a `writeText()` */
-  int sendTestPositions();                                                           /* Sends some test positions that shows you the range in which the ABB is moving. */
   int sendCheckState();                                                              /* Sends the check state command to the Abb; used to get the state but also to detect if the abb is offline. */
+  int sendTestPositions();                                                           /* Sends some test positions that shows you the range in which the ABB is moving. */  
+  int sendSwipePositions();                                                          /* After writing a text message we want to generate an awesome swipe in the background. This function generates this swipe. */ 
   void onSocketConnected();                                                          /* Gets called by the `sock` member when we're connected with the Abb. */
   void onSocketDisconnected();                                                       /* Gets called by the `sock` member when we get disconnected. */   
 

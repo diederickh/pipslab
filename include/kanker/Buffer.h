@@ -26,7 +26,7 @@ class Buffer {
   int size();
   void clear();
   uint8_t* ptr();
-  void writePosition(float x, float y, float z);
+  void writePosition(float x, float y, float z, float rotationZ = 0.0);
   void writeU8(uint8_t v);
   void writeU32(uint32_t v);
   void writeFloat(float f);
@@ -56,10 +56,11 @@ inline uint8_t* Buffer::ptr() {
 }
 
 /* ------------------------------------------------------------------------- */
-inline void Buffer::writePosition(float x, float y, float z) {
+inline void Buffer::writePosition(float x, float y, float z, float rotationZ) {
   writeFloat(x);
   writeFloat(y);
   writeFloat(z);
+  writeFloat(rotationZ);
 }
 
 inline void Buffer::writeFloat(float f) {

@@ -11,8 +11,9 @@ static void on_font_file_selected(int selectid, int optionid, void* user);
 static void on_abb_load_settings_clicked(int id, void* user);
 static void on_abb_save_settings_clicked(int id, void* user);
 static void on_abb_test_upload_clicked(int id, void* user);
-static void on_abb_send_test_clicked(int id, void* user);
 static void on_abb_send_message_to_robot_clicked(int id, void* user);
+static void on_abb_send_test_clicked(int id, void* user);
+static void on_abb_send_swipe_clicked(int id, void* user);
 
 /* ------------------------------------------------------------------------------------ */
 
@@ -109,7 +110,8 @@ int KankerApp::init() {
   }
 
   test_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
-  test_message = "diederick";
+  //test_message = "diederick";
+  //test_message = "d d d a a";
   //test_message = "aaaaaa";
   //test_message = "bbbbbb";
   //test_message = "x";
@@ -144,6 +146,7 @@ int KankerApp::createGui() {
   group_font->add(new Button("Show test message",  0, GUI_ICON_FONT, on_font_test_clicked, this,  GUI_STYLE_NONE));
   group_font->add(new Button("Send test message to robot", 0, GUI_ICON_UPLOAD, on_abb_send_message_to_robot_clicked, this, GUI_STYLE_NONE));
   group_font->add(new Button("Send test positions to robot",  0, GUI_ICON_UPLOAD, on_abb_send_test_clicked, this,  GUI_STYLE_NONE));
+  group_font->add(new Button("Send SWIPE to robot",  0, GUI_ICON_UPLOAD, on_abb_send_swipe_clicked, this,  GUI_STYLE_NONE));
 
   /* Saving */
   Group* group_save = gui->addGroup("Save font", GUI_STYLE_NONE);
@@ -826,7 +829,7 @@ static void on_abb_send_message_to_robot_clicked(int id, void* user) {
 
   KankerApp* app = static_cast<KankerApp*>(user);
   if (NULL == app) {
-    RX_ERROR("Failed to cast to kankerApp");
+    RX_ERROR("Failed to cast to KankerApp");
     return;
   }
   
@@ -845,6 +848,17 @@ static void on_abb_send_test_clicked(int id, void* user) {
   }
   
   app->controller.kanker_abb.sendTestPositions();
+}
+
+static void on_abb_send_swipe_clicked(int id, void* user) {
+
+  KankerApp* app = static_cast<KankerApp*>(user);
+  if (NULL == app) {
+    RX_ERROR("Failed to cast to KankerApp");
+    return;
+  }
+  
+  app->controller.kanker_abb.sendSwipePositions();
 }
 
 /* ------------------------------------------------------------------------------------ */

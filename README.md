@@ -33,5 +33,6 @@ $ ./release_x86.sh
 ## Todo
 
 ````sh
-- Socket::send(), when sending fails we exit(), need to handle this.
+[x] Socket::send(), when sending fails we exit(), need to handle this.
+[ ] Make sure to validate the min_x, max_x, min_y, min_y
 ````
