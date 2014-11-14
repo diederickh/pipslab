@@ -552,15 +552,39 @@ int KankerAbb::addSwipeToBuffer() {
   float perc = 0.0f;
   size_t start_offset = buffer.size();
 
-  RX_VERBOSE(">>>>>>>> %lu", start_offset);
-
   buffer.writeU8(ABB_CMD_POSITION);
   buffer.writePosition(0, min_x, min_y);
 
-  /* Turn on the I/O */
+  /*
+    Turn on the I/O 
+
+     -  which led, 1 = BLUE, 2 = RED, 3 = not working.  
+   */
+  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(2); buffer.writeFloat(1);  /* Turn led 2 on */
+    buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, min_x, min_y, 0.0f);
+    buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, max_x, min_y, -80.0f);
+  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(2); buffer.writeFloat(0); 
+
+  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(1); buffer.writeFloat(1); 
+    buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, max_x, max_y, 0.0f);
+    buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, max_x, max_y, 80.0f);
+  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(1); buffer.writeFloat(0); 
+
+
+  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(2); buffer.writeFloat(1); 
+    buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, min_x, max_y, 0.0f);
+  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(2); buffer.writeFloat(0); 
+
+  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(1); buffer.writeFloat(1); 
+    buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, min_x, min_y, 40.0f);
+  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(1); buffer.writeFloat(0); 
+
+  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(1);  buffer.writeFloat(1); 
+
+#if 0 
   buffer.writeU8(ABB_CMD_IO);
-  buffer.writeFloat(1);
-  buffer.writeFloat(1);
+  buffer.writeFloat(1); /* which led, 1 = BLUE, 2 = RED, 3 =  */
+  buffer.writeFloat(1); /* 0 = off, 1 = on */
 
   /* Move in max area */
   positions.push_back(vec3(min_x, min_y, 0));
@@ -571,10 +595,10 @@ int KankerAbb::addSwipeToBuffer() {
 
   /* Some degrees we use to change the tcp. */
   std::vector<float> degrees;
-  degrees.push_back(65);
-  degrees.push_back(-65);
-  degrees.push_back(65);
-  degrees.push_back(-65);
+  degrees.push_back(0);
+  degrees.push_back(-80);
+  degrees.push_back(0);
+  degrees.push_back(80);
 
   for (size_t j = 0; j < positions.size(); ++j) {
     vec3& v = positions[j];
@@ -590,6 +614,7 @@ int KankerAbb::addSwipeToBuffer() {
     buffer.writeFloat(degrees[dx]);
   }
 
+#if 0
   /* Add a wave */
   float max_h = (max_y - min_y) * 0.4; 
   float cy = min_y + (max_y - min_y) * 0.5;
@@ -606,18 +631,24 @@ int KankerAbb::addSwipeToBuffer() {
     buffer.writeFloat(y);
     buffer.writeFloat(0.0f);
   }
+#endif
 
   /* Turn off the i/o. */
   buffer.writeU8(ABB_CMD_IO);
   buffer.writeFloat(1);
   buffer.writeFloat(0);
 
+  buffer.writeU8(ABB_CMD_IO);
+  buffer.writeFloat(2);
+  buffer.writeFloat(0);
+#endif
+
   /* Back to center. */
   buffer.writeU8(ABB_CMD_POSITION);
   buffer.writeFloat(0.0f);
   buffer.writeFloat(0.0f);
   buffer.writeFloat(0.0f);
-  buffer.writeFloat(0.0f);
+  buffer.writeFloat(-80.0f);
 
   /* Just some safety... */
   if (buffer.size() > 1024) {

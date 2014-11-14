@@ -111,15 +111,16 @@ int KankerApp::init() {
 
   test_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
   //test_message = "roger abb";
-  //test_message = "ik sta op tegen kanker";
+  //test_message = "ik sta op tegen kanker ik sta op tegen kanker.";
   //test_message = "i love ";
-  test_message = "diederick";
-  test_message = "ipsum";
+  //test_message = "diederick";
+  //test_message = "Martin gefeliciteerd!";
+  //test_message = "ipsum";
   //test_message = "d d d a a";
   //test_message = "aaaaaa";
   //test_message = "bbbbbb";
   //test_message = "x";
-  //test_message = "a";
+  test_message = "a";
 
   /* Force a load for the settings. */
   on_abb_load_settings_clicked(0, this);

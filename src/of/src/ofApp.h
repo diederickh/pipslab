@@ -29,6 +29,9 @@ class ofApp : public ofBaseApp,
   void onAbbDisconnected();
   void onAbbMessageReady();
 
+  /* OSC */
+  void sendReadyToKeez();
+
  public:
 
   /* We communicate with Keez's application over osc. */

@@ -20,12 +20,12 @@ void ofApp::setup(){
   }
 
   /* Setup OSC so we can communicate with Keez' app. */
-  int remote_port = 2233;
-  int local_port = 2244;
-  std::string local_host = "127.0.0.1";
-  osc_receiver.setup(remote_port);
-  osc_sender.setup(local_host, local_port);
-
+  int receiver_port = 2233;
+  int sender_port = 2244;
+  std::string sender_host = "127.0.0.1";
+  sender_host ="192.168.1.74";
+  osc_receiver.setup(receiver_port);
+  osc_sender.setup(sender_host, sender_port);
 }
 
 //--------------------------------------------------------------
@@ -53,13 +53,13 @@ void ofApp::update(){
       }
 
       /* Get the text */
-      last_message_text = m.getArgAsString(1);
+      last_message_text = m.getArgAsString(0);
       if (0 == last_message_text.size()) {
         RX_ERROR("We recieved a /message/new but the given text is empty. Ignoring message.");
         return;
       }
 
-      last_message_id = m.getArgAsInt32(0);
+      last_message_id = m.getArgAsInt32(1);
 
       /* And write the text with the ABB. */
       r = abb.writeText(last_message_id, last_message_text);
@@ -86,10 +86,17 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-  printf("Sending something to the abb.\n");
+
   static int64_t msg_id = 0;
-  abb.writeText(msg_id, "hola!");
-  ++msg_id;
+
+  if (key == 't' || key == 'T') {
+    printf("Sending something to the abb.\n");
+    abb.writeText(msg_id, "hola!");
+    ++msg_id;
+  }
+  else if (key == 'r' || key == 'R') {
+    sendReadyToKeez();
+  }
 }
 
 //--------------------------------------------------------------
@@ -161,9 +168,15 @@ void ofApp::onAbbMessageReady() {
 
   can_write_to_abb = true;
 
+  sendReadyToKeez();
+}
+
+void ofApp::sendReadyToKeez() {
+
   /* Notify Keez' application that we're ready with wring the message. */
   ofxOscMessage m;
   m.setAddress("/message/ready");
+  m.addIntArg((int)last_message_id);
+
   osc_sender.sendMessage(m);
 }
-
