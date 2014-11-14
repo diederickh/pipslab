@@ -37,7 +37,7 @@ enum {
   KSTATE_FONT_TEST,                                                            /* Uses the current font to check if it works with the ABB. */ 
 };
 
-class KankerApp : public KankerAbbControllerListener {
+class KankerApp : public KankerAbbListener {
 
  public:
   KankerApp();
@@ -59,9 +59,6 @@ class KankerApp : public KankerAbbControllerListener {
   void onMouseMove(double x, double y);
   void onMousePress(double x, double y, int bt, int mods);
   void onMouseRelease(double x, double y, int bt, int mods);
-
-  /* Callback for the controller. */
-  void onAbbStateChanged(int state, int64_t messageID);
 
  private:
   void drawGui();

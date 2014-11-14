@@ -110,15 +110,16 @@ int KankerApp::init() {
   }
 
   test_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac fermentum ";
-  test_message = "roger abb";
+  //test_message = "roger abb";
   //test_message = "ik sta op tegen kanker";
   //test_message = "i love ";
-  //test_message = "diederick";
+  test_message = "diederick";
+  test_message = "ipsum";
   //test_message = "d d d a a";
   //test_message = "aaaaaa";
   //test_message = "bbbbbb";
   //test_message = "x";
-  test_message = "a";
+  //test_message = "a";
 
   /* Force a load for the settings. */
   on_abb_load_settings_clicked(0, this);
@@ -494,10 +495,6 @@ void KankerApp::switchState(int newstate) {
       break;
     }
   }
-}
-
-void KankerApp::onAbbStateChanged(int state, int64_t messageID) {
-  RX_VERBOSE("The ABB state changed to %d for message %lld", state, messageID);
 }
 
 void KankerApp::onChar(unsigned int key) {

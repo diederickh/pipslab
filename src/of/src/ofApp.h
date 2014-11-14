@@ -3,10 +3,10 @@
 #include "ofMain.h"
 #include <kanker/KankerAbb.h>
 #include <kanker/KankerAbbController.h>
+#include <ofxOsc.h>
 
-class ofApp : public ofBaseApp,
-  public KankerAbbListener,
-  public KankerAbbControllerListener {
+class ofApp : public ofBaseApp, 
+              public KankerAbbListener {
  public:
   void setup();
   void update();
@@ -29,10 +29,16 @@ class ofApp : public ofBaseApp,
   void onAbbDisconnected();
   void onAbbMessageReady();
 
-/* KankerAbbControllerListener */
-void onAbbStateChanged(int state, int64_t messageID);
-
  public:
+
+  /* We communicate with Keez's application over osc. */
+  ofxOscReceiver osc_receiver;
+  ofxOscSender osc_sender;
+
+  /* The `KankerAbbController` takes care of all communication with the ABB and keeps state of the socket i/o */
   KankerAbbController abb;
-//KankerAbb abb;
+  bool is_connected_with_abb;
+  std::string last_message_text;
+  int64_t last_message_id;
+  bool can_write_to_abb;
 };

@@ -239,6 +239,7 @@ int KankerDrawer::updateVertices(std::vector<std::vector<vec3> >& lines) {
     for (size_t j = 0; j < points.size(); ++j) {
       KankerVertex v;
       v.pos = points[j];
+      //v.pos.print();
       vertices.push_back(v);
     }
     counts.push_back(vertices.size() - offsets.back());

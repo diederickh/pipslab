@@ -550,33 +550,31 @@ int KankerAbb::addSwipeToBuffer() {
   float angle = 0.0f;
   float angle_step = TWO_PI / num_points;
   float perc = 0.0f;
+  size_t start_offset = buffer.size();
 
+  RX_VERBOSE(">>>>>>>> %lu", start_offset);
 
   buffer.writeU8(ABB_CMD_POSITION);
   buffer.writePosition(0, min_x, min_y);
 
+  /* Turn on the I/O */
   buffer.writeU8(ABB_CMD_IO);
   buffer.writeFloat(1);
   buffer.writeFloat(1);
 
-  #if 0
-  for (int i = 0; i < num_points; ++i) {
-    perc = float(i) / (num_points-1);
-    angle += angle_step;
-    vec3 v(min_x + perc * getRangeWidth(), min_y + (cos(angle) * getRangeHeight() * 0.5), sin(angle) * radius);
-    buffer.writeU8(ABB_CMD_POSITION);
-    buffer.writePosition(v.z, v.x, v.y);
-  }
-  #endif
-
-
-  /* move in max area */
-
+  /* Move in max area */
   positions.push_back(vec3(min_x, min_y, 0));
   positions.push_back(vec3(max_x, min_y, 0));
   positions.push_back(vec3(max_x, max_y, 0));
   positions.push_back(vec3(min_x, max_y, 0));
   positions.push_back(vec3(min_x, min_y, 0));
+
+  /* Some degrees we use to change the tcp. */
+  std::vector<float> degrees;
+  degrees.push_back(65);
+  degrees.push_back(-65);
+  degrees.push_back(65);
+  degrees.push_back(-65);
 
   for (size_t j = 0; j < positions.size(); ++j) {
     vec3& v = positions[j];
@@ -587,15 +585,50 @@ int KankerAbb::addSwipeToBuffer() {
     buffer.writeFloat(v.z); /* depth */
     buffer.writeFloat(v.x); /* left right */
     buffer.writeFloat(v.y); /* up/down */
-    buffer.writeFloat(0.0f); /* z-rotation */
+
+    size_t dx = j % degrees.size();
+    buffer.writeFloat(degrees[dx]);
   }
 
+  /* Add a wave */
+  float max_h = (max_y - min_y) * 0.4; 
+  float cy = min_y + (max_y - min_y) * 0.5;
+  int steps = 30.0f;
+  float freq = 5.0f;
 
-  //  buffer.writeU8(ABB_CMD_DRAW);
+  for (int i = 0; i < steps; ++i) {
+    float perc = float(i)/(steps-1);
+    float x = min_x + (max_x - min_x) * perc;
+    float y = sin(perc * TWO_PI * freq) * max_h;
+    buffer.writeU8(ABB_CMD_POSITION);
+    buffer.writeFloat(0.0f);
+    buffer.writeFloat(x);
+    buffer.writeFloat(y);
+    buffer.writeFloat(0.0f);
+  }
 
+  /* Turn off the i/o. */
   buffer.writeU8(ABB_CMD_IO);
   buffer.writeFloat(1);
   buffer.writeFloat(0);
+
+  /* Back to center. */
+  buffer.writeU8(ABB_CMD_POSITION);
+  buffer.writeFloat(0.0f);
+  buffer.writeFloat(0.0f);
+  buffer.writeFloat(0.0f);
+  buffer.writeFloat(0.0f);
+
+  /* Just some safety... */
+  if (buffer.size() > 1024) {
+    RX_ERROR("The buffer contains more then 1024 bytes. At this moment we cannot handle this. We have %lu bytes.", buffer.size());
+    buffer.data.erase(buffer.data.begin() + start_offset, buffer.data.end());
+    return -1;
+  }
+
+  RX_VERBOSE("After adding swipe we have %lu bytes in the buffer.", buffer.size());
+
+  return 0;
 }
 
 int KankerAbb::sendNextGlyph() {

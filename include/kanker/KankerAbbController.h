@@ -49,11 +49,12 @@ enum KankerAbbControllerState {
 };
 
 /* ----------------------------------------------------------------- */
-
+/*
 class KankerAbbControllerListener {
  public:
   virtual void onAbbStateChanged(int state, int64_t messageID) {};
 };
+*/
 
 /* ----------------------------------------------------------------- */
 
@@ -62,13 +63,20 @@ class KankerAbbController {
  public:
   KankerAbbController();
   ~KankerAbbController();
-  int init(KankerAbbControllerSettings cfg, KankerAbbControllerListener* listener);             /* Initialize the controller. */
+  int init(KankerAbbControllerSettings cfg, KankerAbbListener* listener);                       /* Initialize the controller. */
   int writeText(int64_t id, std::string text);                                                  /* This make sure that the ABB will draw the given text */  
   void update();                                                                                /* Call this often to make sure that we can read/update the remote state. */
-  void switchState(int st);                                                                     /* Used internally to switch between states based on the ABBs state. */ 
+  //void switchState(int st);                                                                     /* Used internally to switch between states based on the ABBs state. */ 
+
+  /* KankerAbbListener */
+  void onAbbReadyToDraw();
+  void onAbbDrawing();
+  void onAbbConnected();
+  void onAbbDisconnected();
+  void onAbbMessageReady();
                                                                                                 
  public:                                                                                        
-  KankerAbbControllerListener* listener;
+  KankerAbbListener* listener;
   KankerAbbControllerSettings settings;                                                         
   KankerFont kanker_font;                                                                       
   KankerAbb kanker_abb;                                                                         
@@ -78,5 +86,39 @@ class KankerAbbController {
   int state;                                                                                    /* The current state of the controller. */
   int64_t last_message_id;                                                                      
 }; 
+
+inline void KankerAbbController::onAbbReadyToDraw() {
+
+  if (NULL != listener) {
+    listener->onAbbReadyToDraw();
+  }
+}
+
+inline void KankerAbbController::onAbbDrawing() {
+
+  if (NULL != listener) {
+    listener->onAbbDrawing();
+  }
+}
+
+inline void KankerAbbController::onAbbConnected() {
+
+  if (NULL != listener) {
+    listener->onAbbConnected();
+  }
+}
+
+inline void KankerAbbController::onAbbDisconnected() {
+
+  if (NULL != listener) {
+    listener->onAbbDisconnected();
+  }
+}
+
+inline void KankerAbbController::onAbbMessageReady() {
+  if (NULL != listener) {
+    listener->onAbbMessageReady();
+  }
+}
 
 #endif

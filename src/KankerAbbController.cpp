@@ -12,11 +12,12 @@ KankerAbbController::KankerAbbController()
 {
 }
 
-KankerAbbController::~KankerAbbController() {
+KankerAbbController::~KankerAbbController() {  
+  listener = NULL;
 }
 
 int KankerAbbController::init(KankerAbbControllerSettings cfg,
-                              KankerAbbControllerListener* lis)
+                              KankerAbbListener* lis)
  {
    
   if (0 == is_init) {
@@ -45,6 +46,11 @@ int KankerAbbController::init(KankerAbbControllerSettings cfg,
   if (NULL == lis) {
     RX_ERROR("No listener passed into the controller. We need this.");
     return -8;
+  }
+
+  if (0 != kanker_abb.setAbbListener(lis)) {
+    RX_ERROR("Failed to set the listener on KankerAbb.");
+    return -9;
   }
 
   if (0 != kanker_abb.connect()) {
@@ -89,9 +95,6 @@ int KankerAbbController::writeText(int64_t id, std::string text) {
     return -4;
   }
 
-  /* We're writing to the ABB */
-  switchState(KC_STATE_WRITING);
-
   return 0;
 }
 
@@ -99,7 +102,7 @@ void KankerAbbController::update() {
   kanker_abb.update();
 }
 
-
+/*
 void KankerAbbController::switchState(int st) {
 
   RX_VERBOSE("Switching ABB state: %d", st);
@@ -111,5 +114,6 @@ void KankerAbbController::switchState(int st) {
 
   state = st;
 }
+*/
 
 
