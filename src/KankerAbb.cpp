@@ -544,6 +544,8 @@ int KankerAbb::sendSwipePositions() {
 
 int KankerAbb::addSwipeToBuffer() {
 
+  static uint64_t message_count = 0;
+
   std::vector<vec3> positions;
   int num_points = 10;
   float radius = 30.0f;
@@ -560,6 +562,56 @@ int KankerAbb::addSwipeToBuffer() {
 
      -  which led, 1 = BLUE, 2 = RED, 3 = not working.  
    */
+  /*
+  writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0, 2);
+  writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 0.0, 1);
+  writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 0.0, 2);
+  writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0, 1);
+  writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0, 2);
+  */
+
+  int port = 1 + (int)(message_count % 2);
+
+  /* bottom line. */
+  writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0, port);
+  writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 0.0, port);
+  //  writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 0.0, 2);
+  //  writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0, 1);
+
+  /* top line */
+  writeAbbPositionWithAngle(max_x, max_y, 0.0, 0.0);
+  writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 0.0, port);
+  writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0, port);
+
+  /* middle line */
+  float half_y = min_y + getRangeHeight() * 0.5 ;
+  writeAbbPositionWithAngle(min_x, half_y, 0.0, 0.0);
+  writeAbbPositionWithAngleAndIO(min_x, half_y, 0.0, 0.0, port);
+  writeAbbPositionWithAngleAndIO(max_x, half_y, 0.0, 0.0, port);
+
+  message_count++;
+
+#if 0
+  writeAbbIO(2, 1);
+  writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0f);
+  writeAbbPositionWithAngle(max_x, min_y, 0.0, -80.0f);
+  writeAbbIO(2, 0);
+
+  writeAbbIO(1, 1);
+  writeAbbPositionWithAngle(max_x, max_y, 0.0, 0.0f);
+  writeAbbPositionWithAngle(max_x, max_y, 0.0, 80.0f);
+  writeAbbIO(1, 0);
+
+  writeAbbIO(2, 1);
+  writeAbbPositionWithAngle(min_x, max_y, 0.0, 00.0f);
+  writeAbbIO(2, 0);
+
+  writeAbbIO(1, 1);
+  writeAbbPositionWithAngle(min_x, min_y, 0.0, 40.0f);
+  writeAbbIO(1, 0);
+#endif
+
+#if 0
   buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(2); buffer.writeFloat(1);  /* Turn led 2 on */
     buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, min_x, min_y, 0.0f);
     buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, max_x, min_y, -80.0f);
@@ -580,6 +632,7 @@ int KankerAbb::addSwipeToBuffer() {
   buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(1); buffer.writeFloat(0); 
 
   buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(1);  buffer.writeFloat(1); 
+#endif
 
 #if 0 
   buffer.writeU8(ABB_CMD_IO);
@@ -643,12 +696,14 @@ int KankerAbb::addSwipeToBuffer() {
   buffer.writeFloat(0);
 #endif
 
+#if 0
   /* Back to center. */
   buffer.writeU8(ABB_CMD_POSITION);
   buffer.writeFloat(0.0f);
   buffer.writeFloat(0.0f);
   buffer.writeFloat(0.0f);
   buffer.writeFloat(-80.0f);
+#endif
 
   /* Just some safety... */
   if (buffer.size() > 1024) {

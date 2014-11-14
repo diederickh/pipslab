@@ -56,6 +56,7 @@ inline uint8_t* Buffer::ptr() {
 }
 
 /* ------------------------------------------------------------------------- */
+
 inline void Buffer::writePosition(float x, float y, float z, float rotationZ) {
   writeFloat(x);
   writeFloat(y);

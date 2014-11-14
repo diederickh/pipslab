@@ -101,6 +101,11 @@ class KankerAbb : public SocketListener {
   void onSocketConnected();                                                          /* Gets called by the `sock` member when we're connected with the Abb. */
   void onSocketDisconnected();                                                       /* Gets called by the `sock` member when we get disconnected. */   
 
+  /* quickfixes */
+  void writeAbbPositionWithAngle(float x, float y, float z, float rotationZ = 0.0f); /* Write x (left-right), y (top-bottom), z (depth), rotation. */
+  void writeAbbIO(float port, float onoff);
+  void writeAbbPositionWithAngleAndIO(float x, float y, float z, float rotationZ, float port);
+
  public:
   float offset_x;                                                                    /* Used to position all glyphs with an offset so that 0,0 nicely aligns with the range we have in which we can draw. */
   float offset_y;                                                                    /* Used to position all glyphs with a offset. */
@@ -146,5 +151,27 @@ inline int KankerAbb::setAbbListener(KankerAbbListener* lis) {
 
   return 0;
 }
+
+
+/* ------------------------------------------------------------------------- */
+
+/* Input position are x = left to right, y = top to bottom, z = depth */
+inline void KankerAbb::writeAbbPositionWithAngle(float x, float y, float z, float rotationZ) {
+  buffer.writeU8(ABB_CMD_POSITION); 
+  buffer.writePosition(z, x, y, rotationZ);
+}
+
+inline void KankerAbb::writeAbbIO(float port, float onoff) {
+  buffer.writeU8(ABB_CMD_IO); 
+  buffer.writeFloat(port);
+  buffer.writeFloat(onoff);
+}
+
+inline void KankerAbb::writeAbbPositionWithAngleAndIO(float x, float y, float z, float rotationZ, float port) {
+  writeAbbIO(port, 1);
+  writeAbbPositionWithAngle(x, y, z, rotationZ);
+  writeAbbIO(port, 0);
+}
+
 
 #endif
