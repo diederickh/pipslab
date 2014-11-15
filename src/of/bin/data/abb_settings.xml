@@ -1,9 +1,9 @@
 <config>
   <offset_x>7</offset_x>
-  <offset_y>-57</offset_y>
-  <char_scale>69</char_scale>
+  <offset_y>-133</offset_y>
+  <char_scale>67</char_scale>
   <word_spacing>58</word_spacing>
-  <line_height>186</line_height>
+  <line_height>145</line_height>
   <abb_host>192.168.1.100</abb_host>
   <abb_port>1025</abb_port>
   <min_x>-680</min_x>
