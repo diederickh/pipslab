@@ -20,6 +20,7 @@ void ofApp::setup(){
   }
 
   /* Setup OSC so we can communicate with Keez' app. */
+
   int receiver_port = 2233;
   int sender_port = 2244;
   std::string sender_host = "127.0.0.1";

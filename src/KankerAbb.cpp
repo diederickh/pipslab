@@ -572,7 +572,7 @@ int KankerAbb::addSwipeToBuffer() {
   int port2 = 2 - (int)(message_count % 2);
   int type = (int)(message_type % 7);
 
-  // type = 5;
+  //type = 5;
 
   if (0 == type) {
     /* Move in a rect. */
@@ -637,11 +637,10 @@ int KankerAbb::addSwipeToBuffer() {
 
     writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
     writeAbbPositionWithAngle(min_x, max_y, 0.0, 0.0);                  /* bottom left */ 
-    writeAbbPositionWithAngleAndIO(half_x, half_y, 0.0, 180.0f, port);  /* bottom left */
+    writeAbbPositionWithAngleAndIO(half_x, half_y, 0.0, 120.0f, port);  /* bottom left */
     writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 120.0f, port);    /* top right */
-    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 120.0f, port2);   /* top right */
-    writeAbbPositionWithAngleAndIO(half_x, half_y, 0.0, 180.0f, port2); /* bottom left */
-    writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
+    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, -120.0f, port2);   /* top right */
+    writeAbbPositionWithAngleAndIO(half_x, half_y, 0.0, 20.0f, port2); /* bottom left */
   }
   else {
 
@@ -663,6 +662,8 @@ int KankerAbb::addSwipeToBuffer() {
 
     writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
   }
+
+  buffer.writeU8(ABB_CMD_HOME);
 
   message_type++;
   message_count++;

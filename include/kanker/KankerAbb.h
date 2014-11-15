@@ -37,6 +37,7 @@ using namespace rapidxml;
 #define ABB_CMD_IO 1                     /* We want to toggle an io port, command will be: port-num, on/off. */
 #define ABB_CMD_DRAW 3                   /* When the robot receives this it will start moving all the received positions / commands. */ 
 #define ABB_CMD_GET_STATE 4              /* Get the state of the ABB. */
+#define ABB_CMD_HOME 5                   /* Move the tcp back to it's original home position. */
 
 #define ABB_STATE_UNKNOWN -1             /* Default, uninitialized state. */
 #define ABB_STATE_READY 1                /* The ABB is ready to receive commands. */
