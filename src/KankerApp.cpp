@@ -31,6 +31,8 @@ KankerApp::KankerApp()
   ,char_offset_x(0)
   ,char_offset_y(0)
   ,advance_x(0)
+  ,origin_x(gui_width)
+  ,origin_y(0) /* @todo make use of the origin_y */
   ,gui(NULL)
 {
 }
@@ -97,6 +99,8 @@ int KankerApp::init() {
     RX_ERROR("Cannot load: %s", test_font.c_str());
   }
 
+  kanker_font.setOrigin(origin_x, origin_y);
+
   /* Init the ABB interface. */
   //  kanker_abb.range_width = 500;
   //  kanker_abb.range_height = 500;
@@ -124,7 +128,7 @@ int KankerApp::init() {
   //test_message = "bbbbbb";
   //test_message = "x";
   //test_message = "a";
-  test_message = "Lieve papa, we denken aan je.";
+  test_message = "Mijn, mijn, Lieve papa, we denken aan je.";
 
   /* Force a load for the settings. */
   on_abb_load_settings_clicked(0, this);
@@ -359,7 +363,7 @@ void KankerApp::drawHelperLines() {
 
   /* origin vertical line. */
   painter.hex("DDDDDD");
-  painter.line(gui_width, 0, gui_width, painter.height());
+  painter.line(origin_x, 0, origin_x, painter.height());
 
   painter.hex("DDDDDD");
   painter.line(gui_width + 250, 0, gui_width + 250, painter.height());
@@ -462,7 +466,9 @@ void KankerApp::switchState(int newstate) {
     case KSTATE_CHAR_EDIT: {
       info_font.write("Position the origin (dot) and set advance-x. Press space when ready.");
       if (kanker_glyph) {
+
         if (kanker_glyph->advance_x == 0.0f) {
+          /* Auto calc advance x. (just the width). */
           advance_x = kanker_glyph->min_x + kanker_glyph->width;
           advance_x = CLAMP(advance_x, gui_width, painter.width() - gui_width);
         }
@@ -472,6 +478,7 @@ void KankerApp::switchState(int newstate) {
 
         /* Set the initial (or loaded) advance_x on the glyph. */
         kanker_glyph->advance_x = (advance_x - gui_width);
+        kanker_glyph->origin_x = origin_x;
       }
       break;
     }
@@ -706,6 +713,7 @@ void KankerApp::onMouseRelease(double x, double y, int bt, int mods) {
 
       if (kanker_glyph) {
         kanker_glyph->advance_x = advance_x - gui_width;
+        RX_VERBOSE("advance_x: %f", kanker_glyph->advance_x);
       }
       break;
     }

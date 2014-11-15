@@ -103,6 +103,8 @@ class KankerApp : public KankerAbbListener {
   float char_offset_x;
   float char_offset_y;
   float advance_x;
+  float origin_x;                                                               /* The x-position from the left edge of the window. This origin is used to correct the advance x when left aligning the characher points. */  
+  float origin_y;                                                               /* The y-position from the top edge of the window. This origin is used to correct the glyph positions. */
 };
 
 #endif
