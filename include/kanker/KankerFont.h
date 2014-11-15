@@ -37,6 +37,7 @@ inline void KankerFont::setOrigin(float x, float y) {
 
   origin_x = x;
   origin_y = y;
+  RX_VERBOSE("Origin set: %f, %f", x, y);
 
   for (size_t i = 0; i < glyphs.size(); ++i) {
     glyphs[i]->origin_x = origin_x;

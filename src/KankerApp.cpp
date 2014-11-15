@@ -94,12 +94,12 @@ int KankerApp::init() {
   }
 
   /* TEST LOAD FONT */
+  kanker_font.setOrigin(origin_x, origin_y);
+
   std::string test_font = rx_to_data_path("fonts/roxlu.xml");
   if (0 != kanker_font.load(test_font)) {
     RX_ERROR("Cannot load: %s", test_font.c_str());
   }
-
-  kanker_font.setOrigin(origin_x, origin_y);
 
   /* Init the ABB interface. */
   //  kanker_abb.range_width = 500;
@@ -761,8 +761,8 @@ static void on_font_save_clicked(int id, void* user) {
     return;
   }
 
-  RX_VERBOSE("saving file: %s", app->font_filename.c_str());
-
+  RX_VERBOSE("Saving file: %s, origin_x: %f", app->font_filename.c_str(), app->kanker_font.origin_x);
+  
   app->kanker_font.save(rx_to_data_path("fonts/" +app->font_filename));
 }
 

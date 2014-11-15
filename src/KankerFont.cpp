@@ -199,11 +199,8 @@ int KankerFont::load(std::string filepath) {
       return -2;
     }
 
-    /* Get the origin x that is used to position glyphs */
-    origin_x = read_attribute<float>(font, "origin_x", -1.0f);
-    if (0 > origin_x) {
-      RX_ERROR("No origin_x found in the font. Maybe an old version? We ignore this and continue.");
-    }
+    /* Get the origin x that is used to position glyphs or use the one which is currently set. */
+    origin_x = read_attribute<float>(font, "origin_x", origin_x);
 
     xml_node<>* glyph_el = font->first_node("glyph");
     if (NULL == glyph_el) {
