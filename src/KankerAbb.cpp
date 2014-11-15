@@ -108,6 +108,8 @@ int KankerAbb::write(KankerFont& font,
       abb_glyph.glyph.scale(char_scale);
       abb_glyph.glyph.translate(pen_x + offset_x, pen_y + offset_y);
 
+      //      RX_VERBOSE("Glyph: %f", glyph_ptr->origin_x);
+
       /* Copy the simplified version into our abb_glyph copy before adding it to the result. */
       for (size_t k = 0; k < abb_glyph.glyph.segments.size(); ++k) {
 
@@ -536,6 +538,8 @@ int KankerAbb::sendSwipePositions() {
     return -1;
   }
 
+  buffer.writeU8(ABB_CMD_DRAW);
+
   RX_VERBOSE("Sending test, with %lu bytes.", buffer.size());
   sock.send(buffer.ptr(), buffer.size());
   
@@ -545,6 +549,7 @@ int KankerAbb::sendSwipePositions() {
 int KankerAbb::addSwipeToBuffer() {
 
   static uint64_t message_count = 0;
+  static uint64_t message_type = 0;
 
   std::vector<vec3> positions;
   int num_points = 10;
@@ -562,33 +567,39 @@ int KankerAbb::addSwipeToBuffer() {
 
      -  which led, 1 = BLUE, 2 = RED, 3 = not working.  
    */
-  /*
-  writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0, 2);
-  writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 0.0, 1);
-  writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 0.0, 2);
-  writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0, 1);
-  writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0, 2);
-  */
 
   int port = 1 + (int)(message_count % 2);
+  int type = (int)(message_type % 2);
 
-  /* bottom line. */
-  writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0, port);
-  writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 0.0, port);
-  //  writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 0.0, 2);
-  //  writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0, 1);
+  //  type = 0;
+  if (0 == type) {
+    writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0);
+    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -20.0f, port);
+    writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 20.0f, port);
+    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 20.0f, port);
+    writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, -20.0f, port);
+    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -20.0f, port);
+    writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
+  }
+  else {
 
-  /* top line */
-  writeAbbPositionWithAngle(max_x, max_y, 0.0, 0.0);
-  writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 0.0, port);
-  writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0, port);
+    /* bottom line. */
+    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0, port);
+    writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 0.0, port);
 
-  /* middle line */
-  float half_y = min_y + getRangeHeight() * 0.5 ;
-  writeAbbPositionWithAngle(min_x, half_y, 0.0, 0.0);
-  writeAbbPositionWithAngleAndIO(min_x, half_y, 0.0, 0.0, port);
-  writeAbbPositionWithAngleAndIO(max_x, half_y, 0.0, 0.0, port);
+    /* top line */
+    writeAbbPositionWithAngle(max_x, max_y, 0.0, 0.0);
+    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 0.0, port);
+    writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0, port);
 
+    /* middle line */
+    float half_y = min_y + getRangeHeight() * 0.5 ;
+    writeAbbPositionWithAngle(min_x, half_y, 0.0, 0.0);
+    writeAbbPositionWithAngleAndIO(min_x, half_y, 0.0, 0.0, port);
+    writeAbbPositionWithAngleAndIO(max_x, half_y, 0.0, 0.0, port);
+  }
+
+  message_type++;
   message_count++;
 
 #if 0
@@ -728,6 +739,11 @@ int KankerAbb::sendNextGlyph() {
     return 0;
   }
 
+  /* We first draw a swipe before the first character. */
+  if (0 == curr_glyph_index) {
+    addSwipeToBuffer();
+  }
+
   /* get the segments that make up the glyph. */
   KankerAbbGlyph& g = curr_message[curr_glyph_index];
   std::vector<std::vector<vec3> >& segments = g.segments;
@@ -784,10 +800,12 @@ int KankerAbb::sendNextGlyph() {
     buffer.clear();
   }
 
-
+#if 0
+  /* Add a swipe at the end of the message. */
   if ((curr_glyph_index+1) >= curr_message.size()) {
     addSwipeToBuffer();
   }
+#endif
 
   buffer.writeU8(ABB_CMD_DRAW);
     sock.send(buffer.ptr(), buffer.size());

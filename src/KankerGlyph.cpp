@@ -11,6 +11,8 @@ KankerGlyph::KankerGlyph(int charcode)
   ,width(0)
   ,height(0)
   ,advance_x(0)
+  ,origin_x(0)
+  ,origin_y(0)
 {
 }
 
@@ -32,6 +34,8 @@ KankerGlyph& KankerGlyph::operator=(const KankerGlyph& other) {
   width = other.width;
   height = other.height;
   advance_x = other.advance_x;
+  origin_x = other.origin_x;
+  origin_y = other.origin_y;
 
   return *this;
 }
@@ -101,6 +105,8 @@ void KankerGlyph::normalize() {
   min_y *= inv;
   max_y *= inv;
   advance_x *= inv;
+  origin_x *= inv;
+  origin_y *= inv;
 }
 
 void KankerGlyph::normalize(float xHeight) {
@@ -127,6 +133,8 @@ void KankerGlyph::normalize(float xHeight) {
   min_y *= inv;
   max_y *= inv;
   advance_x *= inv;
+  origin_x *= inv;
+  origin_y *= inv;
 }
 
 void KankerGlyph::centralize() {
@@ -203,6 +211,8 @@ void KankerGlyph::scale(float s) {
   width *= scale_x;
   height *= scale_y;
   advance_x *= scale_x;
+  origin_x *= scale_x;
+  origin_y *= scale_y;
 }
 
 void KankerGlyph::flipHorizontal() {
@@ -222,12 +232,23 @@ void KankerGlyph::alignLeft() {
     std::vector<vec3>& points = segments[i];
     for (size_t j = 0; j < points.size(); ++j) {
       vec3& point = points[j];
-      point.x -= min_x;
+      // point.x -= min_x;
+      // printf("%f, %f\n", point.x, origin_x);
+      point.x -= origin_x;
     }
   }
 
- min_x = 0;
- max_x -= min_x;
+ //printf("ad.x: %f, origin_x: %f, r: %f\n", advance_x, origin_x, (advance_x - origin_x));
+ // advance_x -= origin_x; /* advance x is already "relative" */
+ max_x -= origin_x;
+ min_x -= origin_x;
+ origin_x = 0;
+
+
+ //advance_x -= min_x;
+ //max_x -= min_x;
+ //min_x = 0;
+
 }
 
 void KankerGlyph::alignBottom() {
@@ -240,8 +261,8 @@ void KankerGlyph::alignBottom() {
     }
   }
 
-  min_y = 0;
   max_y -= min_y;
+  min_y = 0;
 }
 
 

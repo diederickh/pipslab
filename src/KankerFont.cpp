@@ -34,12 +34,16 @@ template<class T> T read_attribute(xml_node<>* node, std::string name, T def) {
 
 /* --------------------------------------------------------------------------------- */
 
-KankerFont::KankerFont() {
+KankerFont::KankerFont() 
+  :origin_x(-1.0f)
+  ,origin_y(-1.0f)
+{
 }
 
 KankerFont::~KankerFont() {
   clear();
 }
+
 
 void KankerFont::clear() {
 
@@ -68,6 +72,8 @@ KankerGlyph* KankerFont::getGlyphByCharCode(int charcode) {
 }
 
 int KankerFont::save(std::string filepath) {
+
+  RX_ERROR("We need to store the origin_x and origin_y");
 
   if (0 == filepath.size()) {
     RX_ERROR("error: invalid filepath, is empty.");
@@ -221,6 +227,10 @@ int KankerFont::load(std::string filepath) {
 
       /* make sure the glyph is empty. */
       glyph->clear();
+
+      /* Set the origin. */
+      glyph->origin_x = origin_x;
+      glyph->origin_y = origin_y;
 
       xml_node<>* line = glyph_el->first_node("line");
       if (NULL == line) {

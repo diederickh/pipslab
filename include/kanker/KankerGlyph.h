@@ -44,6 +44,8 @@ class KankerGlyph {
   float width;
   float height;
   float advance_x;
+  float origin_x; 
+  float origin_y; /* @todo use this to align the font. */
 };
 
 inline void KankerGlyph::addPoint(vec3& v) {
