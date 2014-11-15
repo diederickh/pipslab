@@ -569,19 +569,59 @@ int KankerAbb::addSwipeToBuffer() {
    */
 
   int port = 1 + (int)(message_count % 2);
-  int type = (int)(message_type % 2);
+  int port2 = 2 - (int)(message_count % 2);
+  int type = (int)(message_type % 8);
 
-  //  type = 0;
+   type = 3;
+
   if (0 == type) {
     /* Move in a rect. */
+	writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
     writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0); /* bottom left */ 
-    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -80.0f, port);  /* bottom left */
+    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -120.0f, port);  /* bottom left */
     writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 40.0f, port);   /* bottom right */
-    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, -40.0f, port);  /* top right */
-    writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 20.0f, port);   /* top left */
-    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 40.0f, port);   /* bottom left */
+    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 180.0f, port);  /* top right */
+    writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0f, port);   /* top left */
+    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0f, port);   /* bottom left */
     writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
   }
+  else if (1 == type) {
+	    /* Move in a rect. */
+	writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
+    writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0); /* bottom left */ 
+    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -120.0f, port);  /* bottom left */
+    writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, -40.0f, port2);   /* bottom right */
+    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, -180.0f, port);  /* top right */
+    writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0f, port2);   /* top left */
+    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0f, port);   /* bottom left */
+    writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
+
+  }
+  else if (2 == type) {
+	    /* bottom line. */
+	writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
+   // writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -90.0, port);
+   // writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 0.0, port);
+
+    /* top line */
+  //  writeAbbPositionWithAngle(max_x, max_y, 0.0, 0.0);
+  //  writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 0.0, port2);
+  //  writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0, port2);
+
+    /* middle line */
+    float half_y = min_y + getRangeHeight() * 0.5 ;
+    writeAbbPositionWithAngle(min_x, half_y, 0.0, 0.0);
+    writeAbbPositionWithAngleAndIO(min_x, half_y, 0.0, -180.0f, port);
+    writeAbbPositionWithAngleAndIO(max_x, half_y, 0.0, 180.0f, port);
+  }
+  else if (3 == type) {
+	 writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
+	 writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0); /* bottom left */ 
+	 writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -40.0f, port);  /* bottom left */
+     writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 120.0f, port);  /* top right */
+	 writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
+  }
+
   else {
 
     /* bottom line. */
