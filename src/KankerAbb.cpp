@@ -576,88 +576,77 @@ int KankerAbb::addSwipeToBuffer() {
 
   if (0 == type) {
     /* Move in a rect. */
-	writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
-    writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0); /* bottom left */ 
+    writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
+    writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0);                 /* bottom left */ 
     writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -120.0f, port);  /* bottom left */
-    writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 40.0f, port);   /* bottom right */
-    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 180.0f, port);  /* top right */
-    writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0f, port);   /* top left */
-    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0f, port);   /* bottom left */
+    writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 40.0f, port);    /* bottom right */
+    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 180.0f, port);   /* top right */
+    writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0f, port);     /* top left */
+    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0f, port);     /* bottom left */
     writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
   }
   else if (1 == type) {
-	    /* Move in a rect. */
-	writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
-    writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0); /* bottom left */ 
+    /* Move in a rect. */
+    writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
+    writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0);                 /* bottom left */ 
     writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -120.0f, port);  /* bottom left */
-    writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, -40.0f, port2);   /* bottom right */
+    writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, -40.0f, port2);  /* bottom right */
     writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, -180.0f, port);  /* top right */
-    writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0f, port2);   /* top left */
-    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0f, port);   /* bottom left */
+    writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0f, port2);    /* top left */
+    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0f, port);     /* bottom left */
     writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
-
   }
   else if (2 == type) {
-	    /* bottom line. */
-	writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
-   // writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -90.0, port);
-   // writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 0.0, port);
-
-    /* top line */
-  //  writeAbbPositionWithAngle(max_x, max_y, 0.0, 0.0);
-  //  writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 0.0, port2);
-  //  writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 0.0, port2);
+    /* bottom line. */
+    writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
 
     /* middle line */
     float half_y = min_y + getRangeHeight() * 0.5 ;
     writeAbbPositionWithAngle(min_x, half_y, 0.0, 0.0);
     writeAbbPositionWithAngleAndIO(min_x, half_y, 0.0, -180.0f, port);
     writeAbbPositionWithAngleAndIO(max_x, half_y, 0.0, 180.0f, port);
+    writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
   }
   else if (3 == type) {
 
-	   float half_x = min_x + getRangeWidth() * 0.5 ;
-	 writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
-	 writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0); /* bottom left */ 
-	 writeAbbPositionWithAngleAndIO(half_x, max_y, 0.0, -140.0f, port);  /* bottom left */
-     writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 120.0f, port);  /* top right */
-	 writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
+    float half_x = min_x + getRangeWidth() * 0.5 ;
+    writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
+    writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0);                  /* bottom left */ 
+    writeAbbPositionWithAngleAndIO(half_x, max_y, 0.0, -140.0f, port);  /* bottom left */
+    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 120.0f, port);    /* top right */
+    writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
   }
+  else if (4 == type) {
 
-   else if (4 == type) {
-	    float half_y = min_y + getRangeHeight() * 0.5 ;
-	   float half_x = min_x + getRangeWidth() * 0.5 ;
-	 writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
-	 writeAbbPositionWithAngle(min_x, max_y, 0.0, 0.0); /* bottom left */ 
-	 writeAbbPositionWithAngleAndIO(half_x, max_y, 0.0, 140.0f, port);  /* bottom left */
-     writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, -120.0f, port2);  /* top right */
-	  writeAbbPositionWithAngleAndIO(min_x, half_y, 0.0, -120.0f, port);  /* top right */
-	    writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 0.0f, port);  /* top right */
-		 writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, -90.0f, port);  /* top right */
-	 writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
+    float half_y = min_y + getRangeHeight() * 0.5;
+    float half_x = min_x + getRangeWidth() * 0.5;
+
+    writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
+    writeAbbPositionWithAngle(min_x, max_y, 0.0, 0.0);                 /* bottom left */ 
+    writeAbbPositionWithAngleAndIO(half_x, max_y, 0.0, 140.0f, port);  /* bottom left */
+    writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, -120.0f, port2); /* top right */
+    writeAbbPositionWithAngleAndIO(min_x, half_y, 0.0, -120.0f, port); /* top right */
+    writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 0.0f, port);     /* top right */
+    writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, -90.0f, port);   /* top right */
+    writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
   }
+  else if (5 == type) {
 
-    else if (5 == type) {
-		   float half_y = min_y + getRangeHeight() * 0.5 ;
-	   float half_x = min_x + getRangeWidth() * 0.5 ;
-	  writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
-	   writeAbbPositionWithAngle(min_x, max_y, 0.0, 0.0); /* bottom left */ 
-	// writeAbbPositionWithAngle(minx, half_y, 0.0, 0.0);
-	// writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0); /* bottom left */ 
-	 writeAbbPositionWithAngleAndIO(half_x, half_y, 0.0, 180.0f, port);  /* bottom left */
-     writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 120.0f, port);  /* top right */
+    float half_y = min_y + getRangeHeight() * 0.5;
+    float half_x = min_x + getRangeWidth() * 0.5;
 
-	  // writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
-	    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 120.0f, port2);  /* top right */
-		 writeAbbPositionWithAngleAndIO(half_x, half_y, 0.0, 180.0f, port2);  /* bottom left */
-
-	 writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
+    writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
+    writeAbbPositionWithAngle(min_x, max_y, 0.0, 0.0);                  /* bottom left */ 
+    writeAbbPositionWithAngleAndIO(half_x, half_y, 0.0, 180.0f, port);  /* bottom left */
+    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 120.0f, port);    /* top right */
+    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 120.0f, port2);   /* top right */
+    writeAbbPositionWithAngleAndIO(half_x, half_y, 0.0, 180.0f, port2); /* bottom left */
+    writeAbbPositionWithAngle(0, 0, 0.0, 0.0);
   }
-
-
   else {
 
     /* bottom line. */
+    writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
     writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 0.0, port);
     writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 0.0, port);
 
@@ -671,124 +660,12 @@ int KankerAbb::addSwipeToBuffer() {
     writeAbbPositionWithAngle(min_x, half_y, 0.0, 0.0);
     writeAbbPositionWithAngleAndIO(min_x, half_y, 0.0, 0.0, port);
     writeAbbPositionWithAngleAndIO(max_x, half_y, 0.0, 0.0, port);
+
+    writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
   }
 
   message_type++;
   message_count++;
-
-#if 0
-  writeAbbIO(2, 1);
-  writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0f);
-  writeAbbPositionWithAngle(max_x, min_y, 0.0, -80.0f);
-  writeAbbIO(2, 0);
-
-  writeAbbIO(1, 1);
-  writeAbbPositionWithAngle(max_x, max_y, 0.0, 0.0f);
-  writeAbbPositionWithAngle(max_x, max_y, 0.0, 80.0f);
-  writeAbbIO(1, 0);
-
-  writeAbbIO(2, 1);
-  writeAbbPositionWithAngle(min_x, max_y, 0.0, 00.0f);
-  writeAbbIO(2, 0);
-
-  writeAbbIO(1, 1);
-  writeAbbPositionWithAngle(min_x, min_y, 0.0, 40.0f);
-  writeAbbIO(1, 0);
-#endif
-
-#if 0
-  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(2); buffer.writeFloat(1);  /* Turn led 2 on */
-    buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, min_x, min_y, 0.0f);
-    buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, max_x, min_y, -80.0f);
-  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(2); buffer.writeFloat(0); 
-
-  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(1); buffer.writeFloat(1); 
-    buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, max_x, max_y, 0.0f);
-    buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, max_x, max_y, 80.0f);
-  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(1); buffer.writeFloat(0); 
-
-
-  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(2); buffer.writeFloat(1); 
-    buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, min_x, max_y, 0.0f);
-  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(2); buffer.writeFloat(0); 
-
-  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(1); buffer.writeFloat(1); 
-    buffer.writeU8(ABB_CMD_POSITION); buffer.writePosition(0.0, min_x, min_y, 40.0f);
-  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(1); buffer.writeFloat(0); 
-
-  buffer.writeU8(ABB_CMD_IO); buffer.writeFloat(1);  buffer.writeFloat(1); 
-#endif
-
-#if 0 
-  buffer.writeU8(ABB_CMD_IO);
-  buffer.writeFloat(1); /* which led, 1 = BLUE, 2 = RED, 3 =  */
-  buffer.writeFloat(1); /* 0 = off, 1 = on */
-
-  /* Move in max area */
-  positions.push_back(vec3(min_x, min_y, 0));
-  positions.push_back(vec3(max_x, min_y, 0));
-  positions.push_back(vec3(max_x, max_y, 0));
-  positions.push_back(vec3(min_x, max_y, 0));
-  positions.push_back(vec3(min_x, min_y, 0));
-
-  /* Some degrees we use to change the tcp. */
-  std::vector<float> degrees;
-  degrees.push_back(0);
-  degrees.push_back(-80);
-  degrees.push_back(0);
-  degrees.push_back(80);
-
-  for (size_t j = 0; j < positions.size(); ++j) {
-    vec3& v = positions[j];
-    buffer.writeU8(ABB_CMD_POSITION);
-
-    /* We dont need to convert the positions because the 
-       coordinates we use -are- in ABB space */
-    buffer.writeFloat(v.z); /* depth */
-    buffer.writeFloat(v.x); /* left right */
-    buffer.writeFloat(v.y); /* up/down */
-
-    size_t dx = j % degrees.size();
-    buffer.writeFloat(degrees[dx]);
-  }
-
-#if 0
-  /* Add a wave */
-  float max_h = (max_y - min_y) * 0.4; 
-  float cy = min_y + (max_y - min_y) * 0.5;
-  int steps = 30.0f;
-  float freq = 5.0f;
-
-  for (int i = 0; i < steps; ++i) {
-    float perc = float(i)/(steps-1);
-    float x = min_x + (max_x - min_x) * perc;
-    float y = sin(perc * TWO_PI * freq) * max_h;
-    buffer.writeU8(ABB_CMD_POSITION);
-    buffer.writeFloat(0.0f);
-    buffer.writeFloat(x);
-    buffer.writeFloat(y);
-    buffer.writeFloat(0.0f);
-  }
-#endif
-
-  /* Turn off the i/o. */
-  buffer.writeU8(ABB_CMD_IO);
-  buffer.writeFloat(1);
-  buffer.writeFloat(0);
-
-  buffer.writeU8(ABB_CMD_IO);
-  buffer.writeFloat(2);
-  buffer.writeFloat(0);
-#endif
-
-#if 0
-  /* Back to center. */
-  buffer.writeU8(ABB_CMD_POSITION);
-  buffer.writeFloat(0.0f);
-  buffer.writeFloat(0.0f);
-  buffer.writeFloat(0.0f);
-  buffer.writeFloat(-80.0f);
-#endif
 
   /* Just some safety... */
   if (buffer.size() > 1024) {
@@ -797,7 +674,7 @@ int KankerAbb::addSwipeToBuffer() {
     return -1;
   }
 
-  RX_VERBOSE("After adding swipe we have %lu bytes in the buffer.", buffer.size());
+  RX_VERBOSE("After adding swipe we have %lu bytes in the buffer. We're using swipe type: %d", buffer.size(), type);
 
   return 0;
 }
