@@ -89,7 +89,8 @@ int KankerFont::save(std::string filepath) {
   RX_VERBOSE("Iterating over font...");
 
   std::stringstream ss;
-  ss << "<font>\n";
+
+  ss << "<font origin_x=\"" << origin_x << "\">\n";
   
    std::vector<KankerGlyph*>::iterator it = glyphs.begin();
 
@@ -196,6 +197,12 @@ int KankerFont::load(std::string filepath) {
     if (NULL == font) {
       RX_ERROR("error: cannot find main <font> element.");
       return -2;
+    }
+
+    /* Get the origin x that is used to position glyphs */
+    origin_x = read_attribute<float>(font, "origin_x", -1.0f);
+    if (0 > origin_x) {
+      RX_ERROR("No origin_x found in the font. Maybe an old version? We ignore this and continue.");
     }
 
     xml_node<>* glyph_el = font->first_node("glyph");
