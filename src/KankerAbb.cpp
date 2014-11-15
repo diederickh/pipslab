@@ -573,12 +573,13 @@ int KankerAbb::addSwipeToBuffer() {
 
   //  type = 0;
   if (0 == type) {
-    writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0);
-    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -20.0f, port);
-    writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 20.0f, port);
-    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, 20.0f, port);
-    writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, -20.0f, port);
-    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -20.0f, port);
+    /* Move in a rect. */
+    writeAbbPositionWithAngle(min_x, min_y, 0.0, 0.0); /* bottom left */ 
+    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, -80.0f, port);  /* bottom left */
+    writeAbbPositionWithAngleAndIO(max_x, min_y, 0.0, 40.0f, port);   /* bottom right */
+    writeAbbPositionWithAngleAndIO(max_x, max_y, 0.0, -40.0f, port);  /* top right */
+    writeAbbPositionWithAngleAndIO(min_x, max_y, 0.0, 20.0f, port);   /* top left */
+    writeAbbPositionWithAngleAndIO(min_x, min_y, 0.0, 40.0f, port);   /* bottom left */
     writeAbbPositionWithAngle(0.0, 0.0, 0.0, 0.0);
   }
   else {

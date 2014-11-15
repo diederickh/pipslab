@@ -128,7 +128,10 @@ int KankerApp::init() {
   //test_message = "bbbbbb";
   //test_message = "x";
   //test_message = "a";
+  //test_message = "Lieve papa, we denken aan je.";
+  //test_message = "Ik sta op tegen kanker voor mijn lieve schoonvader";
   test_message = "Mijn, mijn, Lieve papa, we denken aan je.";
+
 
   /* Force a load for the settings. */
   on_abb_load_settings_clicked(0, this);
