@@ -67,7 +67,7 @@ int main() {
   int w = 1280;
   int h = 768;
  
-  win = glfwCreateWindow(w, h, "KankerFont v0.0.0.1", NULL, NULL);
+  win = glfwCreateWindow(w, h, "KankerFont v0.0.0.2", NULL, NULL);
   if(!win) {
     glfwTerminate();
     exit(EXIT_FAILURE);

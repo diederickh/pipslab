@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 d=${PWD}
 my_build_dir=${d}
@@ -9,24 +9,26 @@ if [ ! -d ${d}/dependencies ] ; then
 fi
 
 # Set environment variables
+
 vs="2012"
-source ./dependencies/environment.sh 
+
+source ./dependencies/environment.sh
 
 set -x
 
-# Download OF for win. 
-if [ "${is_win}" = "y" ] ; then 
+# Download OF for win.
+if [ "${is_win}" = "y" ] ; then
     of=of_v0.8.4_vs_release
     ofappdir=${d}/../${of}/apps/kankerfonds/
 
     if [ ! -d ${d}/../${of} ] ; then
         cd ${d}/../
-        if [ ! -f of.zip ] ; then 
+        if [ ! -f of.zip ] ; then
             curl -o of.zip http://www.openframeworks.cc/versions/v0.8.4/of_v0.8.4_vs_release.zip
         fi
 
         cd ${d}/../
-        if [ ! -d ${of} ] ; then 
+        if [ ! -d ${of} ] ; then
           unzip ./of.zip
         fi
     fi
@@ -42,7 +44,7 @@ if [ "${is_win}" = "y" ] ; then
     fi
 fi
 
-if [ ! -d build.release ] ; then 
+if [ ! -d build.release ] ; then
     mkdir build.release
 fi
 
@@ -66,9 +68,9 @@ cmake \
     -DEXTERN_INC_DIR=${extern_path}/include \
     -DEXTERN_SRC_DIR=${extern_path}/src \
     -DTINYLIB_DIR=${d}/sources/tinylib \
-    -DCMAKE_OSX_ARCHITECTURES=${architecture} \
-    -G "Visual Studio 11 2012" \
-    ../ 
+    ${cmake_osx_architextures} \
+    -G "${cmake_generator}" \
+    ../
 
 cmake --build . --target install --config Release
 

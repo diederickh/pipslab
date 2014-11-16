@@ -1,10 +1,14 @@
 
 # Light Writer Font Tool
 
-Simple font editor for Light Writer project with Pipslab.
+Simple font editor for Light Writer project with Pipslab for the "KWF Kankerbestrijding". This font
+editor was used to generate a hand written font that we used to draw light strokes using a ABB 
+IRB 140 robot. 
 
-<img src="http://i.imgur.com/fWpZEJF.png" alt="Light Writer">
+<img src="https://farm9.staticflickr.com/8575/15618078729_fb04d06529_o.png" alt="Light Writer">
 
+Result:
+<img src="https://farm8.staticflickr.com/7467/15619109040_52719c6280_o.png" alt="ABB stroke">
 
 # Getting the source
 
@@ -27,7 +31,8 @@ dependencies.
 ````sh
 $ cd fontapp
 $ cd build
-$ ./release_x86.sh
+$ ./release_x86.sh 32    # for a 32 bit build
+$ ./release_x86.sh 64    # for a 64 bit build
 ````
 
 ## Todo
