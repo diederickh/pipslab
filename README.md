@@ -7,7 +7,7 @@ IRB 140 robot.
 
 <img src="https://farm9.staticflickr.com/8575/15618078729_fb04d06529_o.png" alt="Light Writer">
 
-Result:
+A list stroke created with the IRB:
 <img src="https://farm8.staticflickr.com/7467/15619109040_52719c6280_o.png" alt="ABB stroke">
 
 # Getting the source
@@ -39,5 +39,5 @@ $ ./release_x86.sh 64    # for a 64 bit build
 
 ````sh
 [x] Socket::send(), when sending fails we exit(), need to handle this.
-[ ] Make sure to validate the min_x, max_x, min_y, min_y
+[x] Make sure to validate the min_x, max_x, min_y, min_y
 ````
