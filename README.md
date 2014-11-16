@@ -7,7 +7,7 @@ IRB 140 robot.
 
 <img src="https://farm9.staticflickr.com/8575/15618078729_fb04d06529_o.png" alt="Light Writer">
 
-A list stroke created with the IRB:
+A light stroke created with the IRB:
 <img src="https://farm8.staticflickr.com/7467/15619109040_52719c6280_o.png" alt="ABB stroke">
 
 # Getting the source

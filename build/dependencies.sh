@@ -1,8 +1,5 @@
 #!/bin/bash
 
-architecture="i386"  
-#architecture="x86_64"
-
 build_m4=n
 build_autoconf=y        # needs an updated m4 
 build_libtool=y
