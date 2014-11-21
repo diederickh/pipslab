@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8.11)
 
+include(${REMOXLY_DIR}/projects/gui/build/CMakeLists.txt)
+
 set(bd ${CMAKE_CURRENT_LIST_DIR}/../)
 set(sd ${bd}/src)
 
@@ -74,7 +76,7 @@ elseif(WIN32)
 
   set(app_libs
     ${EXTERN_LIB_DIR}/glfw3.lib
-    ${EXTERN_LIB_DIR}/remoxly.lib
+#    ${EXTERN_LIB_DIR}/remoxly.lib
     ${EXTERN_LIB_DIR}/libpng16_static.lib
     ${EXTERN_LIB_DIR}/zlibstatic.lib
     ${EXTERN_LIB_DIR}/freetype.lib
@@ -105,17 +107,17 @@ install(FILES ${lib_headers} DESTINATION include/kanker)
 
 # The font creator
 add_executable(kankerfont ${sd}/main.cpp ${app_sources} ${EXTERN_SRC_DIR}/glad.c)
-target_link_libraries(kankerfont kanker ${app_libs} )
+target_link_libraries(kankerfont kanker ${app_libs} remoxly)
 install(TARGETS kankerfont RUNTIME DESTINATION bin)
 
 # Test the socket.
 add_executable(test_socket ${sd}/test_socket.cpp)
-target_link_libraries(test_socket kanker ${app_libs} )
+target_link_libraries(test_socket kanker ${app_libs} remoxly)
 install(TARGETS test_socket RUNTIME DESTINATION bin)
 
 # Test the socket with the ABB.
 add_executable(test_socket_abb ${sd}/test_socket_abb.cpp)
-target_link_libraries(test_socket_abb kanker ${app_libs} )
+target_link_libraries(test_socket_abb kanker ${app_libs} remoxly)
 install(TARGETS test_socket_abb RUNTIME DESTINATION bin)
 
 

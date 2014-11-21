@@ -11,8 +11,7 @@ fi
 # Set environment variables
 
 vs="2012"
-
-source ./dependencies/environment.sh
+source ./dependencies/build.sh
 
 set -x
 
@@ -48,15 +47,6 @@ if [ ! -d build.release ] ; then
     mkdir build.release
 fi
 
-# Compile dependencies
-if [ "${is_linux}" = "y" ] ; then
-    source ./dependencies/build_unix_dependencies.sh
-elif [ "${is_mac}" = "y" ] ; then
-    source ./dependencies/build_unix_dependencies.sh
-elif [ "${is_win}" = "y" ] ; then
-    source ./dependencies/build_win_dependencies.sh
-fi
-
 # Compile the library.
 cd ${my_build_dir}
 cd build.release
@@ -68,6 +58,7 @@ cmake \
     -DEXTERN_INC_DIR=${extern_path}/include \
     -DEXTERN_SRC_DIR=${extern_path}/src \
     -DTINYLIB_DIR=${d}/sources/tinylib \
+    -DREMOXLY_DIR=${sd}/remoxly \
     ${cmake_osx_architextures} \
     -G "${cmake_generator}" \
     ../
