@@ -37,8 +37,8 @@ int KankerDrawer::init(int rttWidth, int rttHeight, int winWidth, int winHeight)
   if (0 != geom_vao) {  RX_ERROR("error: looks like we're already initialized in KankerDrawer.");  return -1;  }
   if (0 >= rttWidth) {  RX_ERROR("error: invalid rtt width: %d", rttWidth);  return -2;   }
   if (0 >= rttHeight) { RX_ERROR("error: invalid rtt height: %d", rttHeight);  return -3;  }
-  if (0 >= winWidth) { RX_ERROR("error: invalid win width."); return -4; } 
-  if (0 >= winHeight) { RX_ERROR("error: invalid win height."); return -5; } 
+  if (0 >= winWidth) { RX_ERROR("error: invalid win width: %d.", winWidth); return -4; } 
+  if (0 >= winHeight) { RX_ERROR("error: invalid win height: %d.", winHeight); return -5; } 
 
   rtt_width = rttWidth;
   rtt_height = rttHeight;

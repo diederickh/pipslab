@@ -43,12 +43,13 @@ if [ "${is_win}" = "y" ] ; then
     fi
 fi
 
+cd ${my_build_dir}
 if [ ! -d build.release ] ; then
     mkdir build.release
 fi
 
 # Compile the library.
-cd ${my_build_dir}
+
 cd build.release
 
 cmake \
@@ -57,8 +58,8 @@ cmake \
     -DEXTERN_LIB_DIR=${extern_path}/lib \
     -DEXTERN_INC_DIR=${extern_path}/include \
     -DEXTERN_SRC_DIR=${extern_path}/src \
-    -DTINYLIB_DIR=${d}/sources/tinylib \
-    -DREMOXLY_DIR=${sd}/remoxly \
+    -DTINYLIB_DIR=${sources_path}/tinylib \
+    -DREMOXLY_DIR=${sources_path}/remoxly \
     ${cmake_osx_architextures} \
     -G "${cmake_generator}" \
     ../

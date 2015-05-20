@@ -81,6 +81,7 @@ int KankerApp::init() {
   }
 
   /* init the drawer. */
+  painter.init();
   if (0 != tiny_drawer.init(1024, 768, painter.width(), painter.height())) {
     RX_ERROR("error: failed to initialize the drawer.");
     return -1;
